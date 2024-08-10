@@ -41,3 +41,19 @@ docker exec -it earthrovers_ros /bin/bash
 See the [documentation for docker
 exec](https://docs.docker.com/reference/cli/docker/container/exec/) for more
 details.
+
+### Developing earthrovers_ros with docker in vscode
+When working on ROS packages in Visual Studio Code, it can be very helpful to
+make VS Code "aware" of the packages and environment created within your Docker
+container (be it for typehints, resolving paths and dependencies, etc.).
+
+To do this, you can connect your VS Code instance to your container using the
+Dev Containers extension that is installed as a part of the [Remote Development
+extension
+pack](https://code.visualstudio.com/docs/remote/remote-overview#_remote-development-extension-pack).
+
+Then, follow [these
+instructions](https://code.visualstudio.com/docs/devcontainers/attach-container)
+from the [devcontainers
+documentation](https://code.visualstudio.com/docs/devcontainers/containers) to
+attach your vscode client to your container.
