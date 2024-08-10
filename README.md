@@ -36,7 +36,7 @@ If you want to create an additional terminal session *inside* a container that
 you have already spun up, you can create and attach to a new terminal session
 with the following command:
 ```
-docker exec -it /bin/bash earthrovers_ros
+docker exec -it earthrovers_ros /bin/bash
 ```
 See the [documentation for docker
 exec](https://docs.docker.com/reference/cli/docker/container/exec/) for more
