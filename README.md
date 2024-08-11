@@ -37,7 +37,7 @@ cd ~/earthrovers_ws/src
 git clone https://github.com/castacks/earthrovers_ros.git
 ```
 
-### 3. Build the development docker image
+### 3. Build the development Docker image
 In the root of the repository you just cloned, run the following command to
 build the development Docker image based on the development Dockerfile.
 ```
@@ -51,7 +51,7 @@ export EARTHROVERS_WS=/path/to/your/workspace/folder
 ```
 Next, use rocker to create a new container using the docker image we just built:
 ```
-rocker --x11 --user --ssh --network host --name earthrovers_ros --volume $EARTHROVERS_WS:/earthrovers_ws -- earthrovers_desktop
+rocker --x11 --user --ssh --network host --name earthrovers_ros --volume $EARTHROVERS_WS:/earthrovers_ws -- earthrovers_development
 ```
 ### 5. Install Earth Rovers ROS package dependencies in container
 Next, in order that all the Earth Rovers ROS packages have all the libraries and
@@ -91,29 +91,24 @@ attach your VSCode client to the VSCode server running in your container.
 If you only need to run the nodes of these packages without making any changes,
 the deployment container is probably what you're looking for.
 
-## Setup
-### Build one of the earthrovers_ros docker images.
-For the desktop image (includes useful visualization tools like rviz).
+### 1. Clone the Earth Rovers ROS repository
 ```
-docker build -t earthrovers_desktop dockerfiles/desktop
-```
-For the base image (for just running the core nodes, you have debugging nodes
-installed somewhere else).
-```
-docker build -t earthrovers_base dockerfiles/base
-```
-### Create a container from the image
-First, set an environment variable EARTHROVERS_WS to the path to your local
-workspace.
-```
-export EARTHROVERS_WS=/path/to/your/workspace/folder
-```
-Next, use rocker to create a new container using the earth rover's docker image.
-```
-rocker --x11 --user --ssh --network host --name earthrovers_ros --volume $EARTHROVERS_WS:/earthrovers_ws -- earthrovers_desktop
+git clone https://github.com/castacks/earthrovers_ros.git
 ```
 
-### Connecting to an existing container / creating a new terminal session
+### 3. Build the deployment Docker image
+In the root of the repository you just cloned, run the following command to
+build the deployment Docker image based on the deployment Dockerfile.
+```
+docker build -t earthrovers_deployment dockerfiles/deployment
+```
+### 4. Create deployment container from the image
+Use rocker to create a new container using the docker image we just built:
+```
+rocker --user --network host --name earthrovers_ros -- earthrovers_deployment
+```
+
+## Connecting to an existing container / creating a new terminal session
 If you want to create an additional terminal session *inside* a container that
 you have already spun up, you can create and attach to a new terminal session
 with the following command:
@@ -123,19 +118,3 @@ docker exec -it earthrovers_ros /bin/bash
 See the [documentation for docker
 exec](https://docs.docker.com/reference/cli/docker/container/exec/) for more
 details.
-
-### Developing earthrovers_ros with docker in vscode
-When working on ROS packages in Visual Studio Code, it can be very helpful to
-make VS Code "aware" of the packages and environment created within your Docker
-container (be it for typehints, resolving paths and dependencies, etc.).
-
-To do this, you can connect your VS Code instance to your container using the
-Dev Containers extension that is installed as a part of the [Remote Development
-extension
-pack](https://code.visualstudio.com/docs/remote/remote-overview#_remote-development-extension-pack).
-
-Then, follow [these
-instructions](https://code.visualstudio.com/docs/devcontainers/attach-container)
-from the [devcontainers
-documentation](https://code.visualstudio.com/docs/devcontainers/containers) to
-attach your vscode client to your container.
