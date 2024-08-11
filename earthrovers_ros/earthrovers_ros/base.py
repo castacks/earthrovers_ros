@@ -12,7 +12,7 @@ from geometry_msgs.msg import Twist
 # TODO: remove, temporary:
 import time
 
-class ControlNode(Node):
+class BaseNode(Node):
     """Node that subscribes to Twist messages on the cmd_vel topic and sends an
     HTTP POST request with the provided angular and linear velocities.
     """
@@ -97,8 +97,8 @@ class ControlNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    control_node = ControlNode()
-    rclpy.spin(control_node)
+    base_node = BaseNode()
+    rclpy.spin(base_node)
     rclpy.shutdown()
 
 if __name__ == "__main__":
