@@ -8,6 +8,11 @@ def generate_launch_description():
                 package='earthrovers_ros',
                 executable='base',
                 name='base',
+            ),
+            Node(
+                package='earthrovers_ros',
+                executable='camera',
+                name='camera',
             )
         ]
     )

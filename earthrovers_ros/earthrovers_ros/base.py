@@ -1,16 +1,13 @@
 """Module containing definition for the earthrover's control node responsible
 for relaying commanded velocity messages to the Earth Rover SDK.
 """
-from typing import Tuple
-
+import time
 import requests
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 
-# TODO: remove, temporary:
-import time
+from sensor_msgs.msg import BatteryState
 
 class BaseNode(Node):
     """Node that subscribes to Twist messages on the cmd_vel topic and sends an
@@ -18,7 +15,7 @@ class BaseNode(Node):
     """
     
     def __init__(self):
-        super().__init__("control")
+        super().__init__("base")
 
         # Per https://shop.frodobots.com/products/earthroverzero, the maximum
         # speed is ~0.94 m/s.
@@ -81,6 +78,7 @@ class BaseNode(Node):
             response = requests.post(f"{sdk_url}/control", json=payload)
         except requests.exceptions.RequestException as e:
             self.get_logger().error(f"POST request to SDK API failed: {e}")
+            return
         else:
             end = time.perf_counter()
             self.get_logger().debug(f"POST response: {response.text}")
