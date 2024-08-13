@@ -13,7 +13,8 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         # Include all launch files.
-        ('share/' + package_name, glob(os.path.join('launch', '*launch.[pxy][yma]*')))
+        ('share/' + package_name, glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
+        ('share/' + package_name, glob(os.path.join('config/camera_calibration', '*.yaml'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

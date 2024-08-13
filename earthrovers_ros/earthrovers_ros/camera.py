@@ -1,8 +1,12 @@
-
+"""Node that periodically gets camera images from the Earth Rover SDK and
+publishes them to their respective topic. Also publishes monocular camera
+calibration parameters if specified.
+"""
 
 import base64
 import time
 import requests
+import yaml
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -11,6 +15,25 @@ from sensor_msgs.msg import CameraInfo
 import numpy as np
 import cv2
 from cv_bridge import CvBridge
+
+from ament_index_python.packages import get_package_share_directory
+
+def get_camera_params(filepath: str) -> CameraInfo:
+    """Parses camera parameters from a YAML file and returns a CameraInfo
+    message populated with those parameters.
+    """
+    camera_info = CameraInfo()
+    with open(filepath, "r") as f:
+        camera_params = yaml.safe_load(f)
+        camera_info.width = camera_params["image_width"]
+        camera_info.height = camera_params["image_height"]
+        camera_info.distortion_model = camera_params["distortion_model"]
+        camera_info.d = camera_params["distortion_coefficients"]["data"]
+        camera_info.k = camera_params["camera_matrix"]["data"]
+        camera_info.r = camera_params["rectification_matrix"]["data"]
+        camera_info.p = camera_params["projection_matrix"]["data"]
+        
+    return camera_info
 
 class CameraNode(Node):
     """Node that periodically gets camera images from the Earth Rover SDK and
@@ -23,8 +46,7 @@ class CameraNode(Node):
         self.declare_parameter("earthrover_sdk_url", "http://localhost:8000")
         self.declare_parameter("front_camera_framerate", 10)
         self.declare_parameter("rear_camera_framerate", 10)
-        self.declare_parameter("front_camera_params_filepath", "config/front_camera_params.yaml")
-        self.declare_parameter("rear_camera_params_filepath", "config/rear_camera_params.yaml")
+        self.declare_parameter("front_camera_params_filepath", "/earthrovers_ws/src/earthrovers_ros/config/camera_calibration/front_camera.yaml")
 
         # Create publishers for front camera messages.
         self._front_camera_pub = self.create_publisher(msg_type=Image,
@@ -54,6 +76,14 @@ class CameraNode(Node):
                             self.get_parameter("rear_camera_framerate").get_parameter_value().integer_value)
         self._screenshots_timer = self.create_timer(timer_period_sec=1.0 / max_framerate,
                                                     callback=self._get_and_publish_camera_images)
+        
+        # Try to parse the front camera's calibration parameters.
+        front_camera_params_filepath = f"{get_package_share_directory('earthrovers_ros')}/front_camera.yaml"
+        try:
+            self._front_camera_info = get_camera_params(front_camera_params_filepath)
+        except Exception as e:
+            self.get_logger().error(f"Failed to parse the front camera's calibration parameters from the provided file {front_camera_params_filepath} {e}")
+            raise e
 
     def _get_and_publish_camera_images(self) -> None:
 
@@ -108,6 +138,11 @@ class CameraNode(Node):
         map_msg = bridge.cv2_to_imgmsg(map_frame, encoding="bgr8")
         map_msg.header.stamp.sec = timestamp_sec
         self._map_image_pub.publish(map_msg)
+
+        # Publish the front camera parameters.
+        self._front_camera_info.header.stamp.sec = timestamp_sec
+        self._front_camera_info.header.frame_id = "front_camera"
+        self._front_camera_info_pub.publish(self._front_camera_info)
 
 def main(args=None):
     rclpy.init(args=args)
