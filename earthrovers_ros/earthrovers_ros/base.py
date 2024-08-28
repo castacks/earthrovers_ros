@@ -4,12 +4,14 @@ for relaying commanded velocity messages to the Earth Rover SDK.
 import time
 import requests
 import rclpy
+from rclpy.time import Time
 from rclpy.node import Node
 from geometry_msgs.msg import Twist, Quaternion
-from sensor_msgs.msg import BatteryState
-from sensor_msgs.msg import NavSatFix
+from sensor_msgs.msg import Imu, MagneticField, NavSatFix
 from nav_msgs.msg import Odometry
 from transforms3d.euler import euler2quat
+
+from conversions import degs_to_rads, gs_to_ms2, lsb_to_tesla
 
 class BaseNode(Node):
     """Node that subscribes to Twist messages on the cmd_vel topic and sends an
@@ -38,17 +40,12 @@ class BaseNode(Node):
         # battery, and other data.
         self._data_timer = self.create_timer(timer_period_sec=1.0 / self.get_parameter("data_publish_rate_hz").get_parameter_value().double_value,
                                              callback=self._get_and_publish_data)
-
-        # Create publishers for the battery state, GPS, and odometry data.
-        self._battery_state_pub = self.create_publisher(msg_type=BatteryState,
-                                                        topic="battery_state",
-                                                        qos_profile=10)
-        self._gps_pub = self.create_publisher(msg_type=NavSatFix,
-                                              topic="gps",
-                                              qos_profile=10)
-        self._odometry_pub = self.create_publisher(msg_type=Odometry,
-                                                   topic="odom",
-                                                   qos_profile=10)
+        
+        # Create publishers for IMU, Magnetic Field, Odometry, and GPS data.
+        self._imu_pub = self.create_publisher(msg_type=Imu, topic="imu", qos_profile=10)
+        self._magnetic_field_pub = self.create_publisher(msg_type=MagneticField, topic="magnetic_field", qos_profile=10)
+        self._odometry_pub = self.create_publisher(msg_type=Odometry, topic="odom", qos_profile=10)
+        self._gps_pub = self.create_publisher(msg_type=NavSatFix, topic="gps", qos_profile=10)
 
     def _cmd_vel_callback(self, twist_msg: Twist) -> None:
         """Callback function for the cmd_vel topic. Receives a Twist message,
@@ -114,8 +111,8 @@ class BaseNode(Node):
 
     def _get_and_publish_data(self) -> None:
         """Callback function for the data_timer. Sends an HTTP GET request to
-        the Earth Rover SDK API to get the most recent data and publishes it to
-        their respective topics.
+        the Earth Rover SDK API to get the most recent sensor data and publishes
+        it to their respective topics.
 
         https://github.com/frodobots-org/earth-rovers-sdk?tab=readme-ov-file#get-data
         for more details on the data endpoint.
@@ -146,15 +143,50 @@ class BaseNode(Node):
             "gps_signal": 31.25,
             "latitude": 22.753774642944336,
             "longitude": 114.09095001220703,
-            "vibration": 0.31
+            "vibration": 0.31,
+            "timestamp": 1724189733.208559,
+            "accel": [0.604, -0.853,0.076],
+            "gyro": [3.595, -3.885,-0.557],
+            "mag": [-75, 195,390],
+            "rpm": [0, 0, 0, 0]
         }
         """
 
-        # Publish the battery state.
-        battery_state_msg = BatteryState()
-        battery_state_msg.percentage = int(response_json["battery"]) / 100.0
-        battery_state_msg.header.stamp = self.get_clock().now().to_msg()
-        self._battery_state_pub.publish(battery_state_msg)
+        # Create common timestamp.
+        timestamp = Time(nanoseconds=int(response_json["timestamp"] * 1e9))
+
+        # Parse, populate, and publish the IMU data.
+        # NOTE: The Earth Rover SDK treats x as up, y as left, and z as
+        # backward. Convert to ROS coordinate system where x is forward, y is
+        # left, and z is up.
+        imu_msg = Imu()
+        imu_msg.header.stamp = timestamp
+        imu_msg.header.frame_id = "base_link" # TODO: Parameterize this.
+        # Set up the linear acceleration and its covariance matrix.
+        imu_msg.linear_acceleration.x = gs_to_ms2(-response_json["accel"][2])  # x = -z
+        imu_msg.linear_acceleration.y = gs_to_ms2(response_json["accel"][1])   # y = +y
+        imu_msg.linear_acceleration.z = gs_to_ms2(response_json["accel"][0])   # z = +x
+        # TODO: Need linear acceleration covariance data from datasheet?
+
+        # Set up the angular velocity and its covariance matrix.
+        imu_msg.angular_velocity.x = degs_to_rads(-response_json["gyro"][2]) # x = -z  # TODO: Does this need inverted?
+        imu_msg.angular_velocity.y = degs_to_rads(response_json["gyro"][1]) # y = +y
+        imu_msg.angular_velocity.z = degs_to_rads(response_json["gyro"][0]) # z = +x
+        # TODO: Need linear acceleration covariance data from datasheet?
+
+        # Parse, populate, and publish the Magnetic Field data.
+        magnetic_field_msg = MagneticField()
+        magnetic_field_msg.header.stamp = timestamp
+        magnetic_field_msg.header.frame_id = "base_link"
+        magnetic_field_msg.magnetic_field.x = lsb_to_tesla(-response_json["mag"][2])  # x = -z
+        magnetic_field_msg.magnetic_field.y = lsb_to_tesla(response_json["mag"][1])   # y = +y
+        magnetic_field_msg.magnetic_field.z = lsb_to_tesla(response_json["mag"][0])   # z = +x
+
+        # Parse, populate, and publish the Odometry data.
+        # Compute skid-steer odometry from each wheel's RPM.
+        
+
+        # Parse, populate, and publish the GPS data.
 
         # Publish the GPS data.
         gps_msg = NavSatFix()
