@@ -12,6 +12,8 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
 
+from rclpy.time import Time
+
 import numpy as np
 import cv2
 from cv_bridge import CvBridge
@@ -69,13 +71,14 @@ class CameraNode(Node):
                                                     topic="map_image",
                                                     qos_profile=10)
 
-        # Create a timer to periodically get camera images and publish them.
-        # Because we get all camera images at the same time, we'll just hit the
-        # endpoint at the maximum framerate between the front and rear cameras.
-        max_framerate = max(self.get_parameter("front_camera_framerate").get_parameter_value().integer_value,
-                            self.get_parameter("rear_camera_framerate").get_parameter_value().integer_value)
-        self._screenshots_timer = self.create_timer(timer_period_sec=1.0 / max_framerate,
-                                                    callback=self._get_and_publish_camera_images)
+        # Create a timer for each camera to periodically get and publish images
+        # from that camera (or the map screenshot endpoint).
+        self._front_camera_timer = self.create_timer(timer_period_sec=1.0 / self.get_parameter("front_camera_framerate").get_parameter_value().integer_value,
+                                                     callback=self._get_and_publish_front_camera_image)
+        self._rear_camera_timer = self.create_timer(timer_period_sec=1.0 / self.get_parameter("rear_camera_framerate").get_parameter_value().integer_value,
+                                                    callback=self._get_and_publish_rear_camera_image)
+        # self._map_image_timer = self.create_timer(timer_period_sec=1.0 / 10,
+        #                                           callback=self._get_and_publish_map_image)
         
         # Try to parse the front camera's calibration parameters.
         front_camera_params_filepath = f"{get_package_share_directory('earthrovers_ros')}/front_camera.yaml"
@@ -84,65 +87,123 @@ class CameraNode(Node):
         except Exception as e:
             self.get_logger().error(f"Failed to parse the front camera's calibration parameters from the provided file {front_camera_params_filepath} {e}")
             raise e
-
-    def _get_and_publish_camera_images(self) -> None:
-
-        # Hit the screenshots endpoint to get the most recent camera frames.
-        earthrover_sdk_url = self.get_parameter("earthrover_sdk_url").get_parameter_value().string_value
+        
+    def _get_and_publish_front_camera_image(self) -> None:
+        """Hits the screenshot endpoint and requests only the front camera
+        image.
+        """
+        earth_rover_sdk_url = self.get_parameter("earthrover_sdk_url").get_parameter_value().string_value
         start = time.perf_counter()
         try:
-            response = requests.get(f"{earthrover_sdk_url}/screenshot")
+            response = requests.get(f"{earth_rover_sdk_url}/screenshot?view_types=front")
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            self.get_logger().error(f"Failed to get camera images: {e}")
+            self.get_logger().error(f"Failed to get front camera image: {e}")
             return
         end = time.perf_counter()
-        self.get_logger().debug(f"screenshots GET request took {end - start} seconds.")
+        self.get_logger().debug(f"Front camera screenshot GET request took {(end - start) * 1000:.0f} milliseconds.")
 
-        # Parse the response JSON to get the camera frames and timestamp.
+        # Parse the response JSON to get the camera frame and timestamp.
         response_json = response.json()
 
-        # TODO: Need to figure out how to translate this UTC timestamp from the
-        # SDK into ROS time--if that's even the goal.
-        
-        timestamp_sec = response_json["timestamp"]
-
         # Prepare and publish the front camera frame.
-        front_video_frame_b64 = response_json["front_video_frame"]
-        nparr = np.fromstring(base64.b64decode(front_video_frame_b64), np.uint8)
-        front_video_frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        front_video_frame_b64 = response_json["front_frame"]
+        image_as_array = np.fromstring(base64.b64decode(front_video_frame_b64), np.uint8)
+        front_video_frame = cv2.imdecode(image_as_array, cv2.IMREAD_COLOR)
         bridge = CvBridge()
         front_camera_msg = bridge.cv2_to_imgmsg(front_video_frame, encoding="bgr8")
-        # TODO: POTENTIAL PROBLEM: While we do have the UTC time in seconds, we
-        # do not receive any time in nano seconds. Not sure if that's a standard
-        # thing or not--but the point is, multiple image frames that are taken
-        # in the same second will end up with the same timestamps.
-        front_camera_msg.header.stamp.sec = timestamp_sec
-        # TODO: Parameterize this frame_id.
+        # Grab the timestamp from the response JSON, convert it to nanoseconds,
+        # create a new Time instance, and initialize the header's stamp with it.
+        # NOTE: These timestamps are STILL NOT THE TIMESTAMP THAT THE IMAGE
+        # FRAME ORIGINATED FROM THE ROBOT BASE. Instead, they are the time at
+        # which the server took the screenshot. Waiting on an update to the SDK
+        # to return the latency between the robot and the server so we can
+        # compute its approximate acquisition time.
+        timestamp = Time(nanoseconds=response_json["timestamp"] * 1e9)
+        front_camera_msg.header.stamp = timestamp.to_msg()
         front_camera_msg.header.frame_id = "front_camera"
         self._front_camera_pub.publish(front_camera_msg)
 
+        # Publish the front camera parameters.
+        self._front_camera_info.header.stamp = timestamp.to_msg()
+        self._front_camera_info.header.frame_id = "front_camera"
+        self._front_camera_info_pub.publish(self._front_camera_info)
+
+    def _get_and_publish_rear_camera_image(self) -> None:
+        """Hits the screenshot endpoint and requests only the rear camera
+        image.
+        """
+        earth_rover_sdk_url = self.get_parameter("earthrover_sdk_url").get_parameter_value().string_value
+        start = time.perf_counter()
+        try:
+            response = requests.get(f"{earth_rover_sdk_url}/screenshot?view_types=rear")
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            self.get_logger().error(f"Failed to get rear camera image: {e}")
+            return
+        end = time.perf_counter()
+        self.get_logger().debug(f"Rear camera screenshot GET request took {(end - start) * 1000:.0f} milliseconds.")
+
+        # Parse the response JSON to get the camera frame and timestamp.
+        response_json = response.json()
+
         # Prepare and publish the rear camera frame.
-        rear_video_frame = response_json["rear_video_frame"]
-        nparr = np.fromstring(base64.b64decode(rear_video_frame), np.uint8)
-        rear_video_frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        rear_video_frame_b64 = response_json["rear_frame"]
+        image_as_array = np.fromstring(base64.b64decode(rear_video_frame_b64), np.uint8)
+        rear_video_frame = cv2.imdecode(image_as_array, cv2.IMREAD_COLOR)
+        bridge = CvBridge()
         rear_camera_msg = bridge.cv2_to_imgmsg(rear_video_frame, encoding="bgr8")
-        rear_camera_msg.header.stamp.sec = timestamp_sec
+        # Grab the timestamp from the response JSON, convert it to nanoseconds,
+        # create a new Time instance, and initialize the header's stamp with it.
+        # NOTE: These timestamps are STILL NOT THE TIMESTAMP THAT THE IMAGE
+        # FRAME ORIGINATED FROM THE ROBOT BASE. Instead, they are the time at
+        # which the server took the screenshot. Waiting on an update to the SDK
+        # to return the latency between the robot and the server so we can
+        # compute its approximate acquisition time.
+        timestamp = Time(nanoseconds=response_json["timestamp"] * 1e9)
+        rear_camera_msg.header.stamp = timestamp.to_msg()
         rear_camera_msg.header.frame_id = "rear_camera"
         self._rear_camera_pub.publish(rear_camera_msg)
 
-        # Prepare and publish the map image.
-        map_frame = response_json["map_frame"]
-        nparr = np.fromstring(base64.b64decode(map_frame), np.uint8)
-        map_frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        map_msg = bridge.cv2_to_imgmsg(map_frame, encoding="bgr8")
-        map_msg.header.stamp.sec = timestamp_sec
-        self._map_image_pub.publish(map_msg)
+        # # Publish the rear camera parameters.
+        # self._rear_camera_info.header.stamp = timestamp.to_msg()
+        # self._rear_camera_info.header.frame_id = "rear_camera"
+        # self._rear_camera_info_pub.publish(self._rear_camera_info)
 
-        # Publish the front camera parameters.
-        self._front_camera_info.header.stamp.sec = timestamp_sec
-        self._front_camera_info.header.frame_id = "front_camera"
-        self._front_camera_info_pub.publish(self._front_camera_info)
+    def _get_and_publish_map_image(self) -> None:
+        """Hits the screenshot endpoint and requests only the map image.
+        """
+        earth_rover_sdk_url = self.get_parameter("earthrover_sdk_url").get_parameter_value().string_value
+        start = time.perf_counter()
+        try:
+            response = requests.get(f"{earth_rover_sdk_url}/screenshot?view_types=map")
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            self.get_logger().error(f"Failed to get map image: {e}")
+            return
+        end = time.perf_counter()
+        self.get_logger().debug(f"Map screenshot GET request took {(end - start) * 1000:.0f} milliseconds.")
+
+        # Parse the response JSON to get the camera frame and timestamp.
+        response_json = response.json()
+
+        # Prepare and publish the map image.
+        map_image_b64 = response_json["map_frame"]
+        image_as_array = np.fromstring(base64.b64decode(map_image_b64), np.uint8)
+        map_image = cv2.imdecode(image_as_array, cv2.IMREAD_COLOR)
+        bridge = CvBridge()
+        map_image_msg = bridge.cv2_to_imgmsg(map_image, encoding="bgr8")
+        # Grab the timestamp from the response JSON, convert it to nanoseconds,
+        # create a new Time instance, and initialize the header's stamp with it.
+        # NOTE: These timestamps are STILL NOT THE TIMESTAMP THAT THE IMAGE
+        # FRAME ORIGINATED FROM THE ROBOT BASE. Instead, they are the time at
+        # which the server took the screenshot. Waiting on an update to the SDK
+        # to return the latency between the robot and the server so we can
+        # compute its approximate acquisition time.
+        timestamp = Time(nanoseconds=response_json["timestamp"] * 1e9)
+        map_image_msg.header.stamp = timestamp.to_msg()
+        map_image_msg.header.frame_id = "map"
+        self._map_image_pub.publish(map_image_msg)
 
 def main(args=None):
     rclpy.init(args=args)
