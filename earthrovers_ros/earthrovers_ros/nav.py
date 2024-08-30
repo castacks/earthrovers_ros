@@ -37,7 +37,7 @@ class NavNode(Node):
         super().__init__("base")
 
         # Create GPS subscriber.
-        self.create_subscription(NavSatFix, "gps_fix", self.gps_to_odom_callback, 10)
+        self.create_subscription(NavSatFix, "gps", self.gps_to_odom_callback, 10)
 
         # Create odom publisher.
         self.__odom_publisher = self.create_publisher(Odometry, "odom", 10)
@@ -100,29 +100,7 @@ class NavNode(Node):
         # TODO: Get these from a service in the base node. FOR NOW, we are just
         # hardcoding these waypoints. Just paste these from the result of
         # hitting the checkpoint-list endpoint in the SDK API.
-        gps_waypoint_json = {
-            "checkpoints_list": [
-                {
-                    "id": 4818,
-                    "sequence": 1,
-                    "latitude": "30.48243713",
-                    "longitude": "114.3026428"
-                },
-                {
-                    "id": 4819,
-                    "sequence": 2,
-                    "latitude": "30.48268318",
-                    "longitude": "114.3026047"
-                },
-                {
-                    "id": 4820,
-                    "sequence": 3,
-                    "latitude": "30.48243713",
-                    "longitude": "114.3026428"
-                }
-            ],
-            "latest_scanned_checkpoint": 0
-        }
+        gps_waypoint_json = {"checkpoints_list":[{"id":697,"sequence":1,"latitude":"30.4823951721","longitude":"114.3026275635"},{"id":698,"sequence":2,"latitude":"30.48272","longitude":"114.3026034"},{"id":699,"sequence":3,"latitude":"30.4823951721","longitude":"114.3026275635"}],"latest_scanned_checkpoint":0}
         gps_waypoints = [(float(waypoint["latitude"]), float(waypoint["longitude"])) for waypoint in gps_waypoint_json["checkpoints_list"]]
 
         # Create a PoseArray message to store the waypoints.
