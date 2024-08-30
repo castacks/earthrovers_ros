@@ -11,7 +11,7 @@ from sensor_msgs.msg import Imu, MagneticField, NavSatFix
 from nav_msgs.msg import Odometry
 from transforms3d.euler import euler2quat
 
-from conversions import degs_to_rads, gs_to_ms2, lsb_to_tesla
+# from conversions import degs_to_rads, gs_to_ms2, lsb_to_tesla
 
 class BaseNode(Node):
     """Node that subscribes to Twist messages on the cmd_vel topic and sends an
@@ -27,7 +27,7 @@ class BaseNode(Node):
         # TODO: Need to determine this value. Guessing 1.57 rad/s for now.
         self.declare_parameter("max_angular_speed_rads", 1.57)
         self.declare_parameter("earthrover_sdk_url", "http://localhost:8000")
-        self.declare_parameter("data_publish_rate_hz", 10.0)
+        self.declare_parameter("data_publish_rate_hz", 1.0)
 
         # Create a subscriber for cmd_vel Twist messages. Will parse these and
         # hit the control endpoint with the normalized values.
@@ -46,6 +46,9 @@ class BaseNode(Node):
         self._magnetic_field_pub = self.create_publisher(msg_type=MagneticField, topic="magnetic_field", qos_profile=10)
         self._odometry_pub = self.create_publisher(msg_type=Odometry, topic="odom", qos_profile=10)
         self._gps_pub = self.create_publisher(msg_type=NavSatFix, topic="gps", qos_profile=10)
+
+        # TODO: Create mission control services. I.e., start mission, end
+        # mission, checkpoint list, checkpoint reached.
 
     def _cmd_vel_callback(self, twist_msg: Twist) -> None:
         """Callback function for the cmd_vel topic. Receives a Twist message,
@@ -122,6 +125,7 @@ class BaseNode(Node):
         earthrover_sdk_url = self.get_parameter("earthrover_sdk_url").get_parameter_value().string_value
         start = time.perf_counter()
         try:
+            self.get_logger().debug(f"Making GET request to {earthrover_sdk_url}/data")
             response = requests.get(f"{earthrover_sdk_url}/data")
         except requests.exceptions.RequestException as e:
             self.get_logger().error(f"Failed to get data: {e}")
@@ -159,59 +163,65 @@ class BaseNode(Node):
         # NOTE: The Earth Rover SDK treats x as up, y as left, and z as
         # backward. Convert to ROS coordinate system where x is forward, y is
         # left, and z is up.
-        imu_msg = Imu()
-        imu_msg.header.stamp = timestamp
-        imu_msg.header.frame_id = "base_link" # TODO: Parameterize this.
-        # Set up the linear acceleration and its covariance matrix.
-        imu_msg.linear_acceleration.x = gs_to_ms2(-response_json["accel"][2])  # x = -z
-        imu_msg.linear_acceleration.y = gs_to_ms2(response_json["accel"][1])   # y = +y
-        imu_msg.linear_acceleration.z = gs_to_ms2(response_json["accel"][0])   # z = +x
-        # TODO: Need linear acceleration covariance data from datasheet?
+        # imu_msg = Imu()
+        # imu_msg.header.stamp = timestamp
+        # imu_msg.header.frame_id = "base_link" # TODO: Parameterize this. ALSO, this should be an imu_link.
+        # # Set up the linear acceleration and its covariance matrix.
+        # imu_msg.linear_acceleration.x = gs_to_ms2(-response_json["accel"][2])  # x = -z
+        # imu_msg.linear_acceleration.y = gs_to_ms2(response_json["accel"][1])   # y = +y
+        # imu_msg.linear_acceleration.z = gs_to_ms2(response_json["accel"][0])   # z = +x
+        # # TODO: Need linear acceleration covariance data from datasheet?
 
-        # Set up the angular velocity and its covariance matrix.
-        imu_msg.angular_velocity.x = degs_to_rads(-response_json["gyro"][2]) # x = -z  # TODO: Does this need inverted?
-        imu_msg.angular_velocity.y = degs_to_rads(response_json["gyro"][1]) # y = +y
-        imu_msg.angular_velocity.z = degs_to_rads(response_json["gyro"][0]) # z = +x
+        # # Set up the angular velocity and its covariance matrix.
+        # imu_msg.angular_velocity.x = degs_to_rads(-response_json["gyro"][2]) # x = -z  # TODO: Does this need inverted?
+        # imu_msg.angular_velocity.y = degs_to_rads(response_json["gyro"][1]) # y = +y
+        # imu_msg.angular_velocity.z = degs_to_rads(response_json["gyro"][0]) # z = +x
         # TODO: Need linear acceleration covariance data from datasheet?
 
         # Parse, populate, and publish the Magnetic Field data.
-        magnetic_field_msg = MagneticField()
-        magnetic_field_msg.header.stamp = timestamp
-        magnetic_field_msg.header.frame_id = "base_link"
-        magnetic_field_msg.magnetic_field.x = lsb_to_tesla(-response_json["mag"][2])  # x = -z
-        magnetic_field_msg.magnetic_field.y = lsb_to_tesla(response_json["mag"][1])   # y = +y
-        magnetic_field_msg.magnetic_field.z = lsb_to_tesla(response_json["mag"][0])   # z = +x
+        # magnetic_field_msg = MagneticField()
+        # magnetic_field_msg.header.stamp = timestamp
+        # magnetic_field_msg.header.frame_id = "imu_link"
+        # magnetic_field_msg.magnetic_field.x = lsb_to_tesla(-response_json["mag"][2])  # x = -z
+        # magnetic_field_msg.magnetic_field.y = lsb_to_tesla(response_json["mag"][1])   # y = +y
+        # magnetic_field_msg.magnetic_field.z = lsb_to_tesla(response_json["mag"][0])   # z = +x
 
         # Parse, populate, and publish the Odometry data.
         # Compute skid-steer odometry from each wheel's RPM.
-        
+
 
         # Parse, populate, and publish the GPS data.
 
         # Publish the GPS data.
+        # NOTE: Not sure of the consequences of publishing the GPS values
+        # multiple times as if they were actually different measurements. This
+        # could cause problems for downstream state-estimation systems...look
+        # into this more later!
         gps_msg = NavSatFix()
+        gps_msg.header.stamp = timestamp
+        gps_msg.header.frame_id = "gps_link"
         gps_msg.latitude = response_json["latitude"]
         gps_msg.longitude = response_json["longitude"]
         self._gps_pub.publish(gps_msg)
 
-        # Populate and publish an Odometry message with the provided speed and
-        # orientation.
-        odometry_msg = Odometry()
-        # AGAIN, need a timestamp for when these were measured.
-        # odometry_msg.header.stamp = self.get_clock().now().to_msg()
-        # TODO: parameterize these frame_ids.
-        odometry_msg.header.frame_id = "odom"
-        odometry_msg.child_frame_id = "base_link"
-        odometry_msg.twist.twist.linear.x = float(response_json["speed"])
-        # Convert the orientation from degrees to radians.
-        orientation_rads = float(response_json["orientation"]) * (3.14159 / 180.0)
-        # Convert the orientation from radians to a quaternion.
-        orientation_quat = euler2quat(0, 0, orientation_rads)
-        odometry_msg.pose.pose.orientation = Quaternion(x=orientation_quat[1],
-                                                        y=orientation_quat[2],
-                                                        z=orientation_quat[3],
-                                                        w=orientation_quat[0])
-        self._odometry_pub.publish(odometry_msg)
+        # # Populate and publish an Odometry message with the provided speed and
+        # # orientation.
+        # odometry_msg = Odometry()
+        # # AGAIN, need a timestamp for when these were measured.
+        # # odometry_msg.header.stamp = self.get_clock().now().to_msg()
+        # # TODO: parameterize these frame_ids.
+        # odometry_msg.header.frame_id = "odom"
+        # odometry_msg.child_frame_id = "base_link"
+        # odometry_msg.twist.twist.linear.x = float(response_json["speed"])
+        # # Convert the orientation from degrees to radians.
+        # orientation_rads = float(response_json["orientation"]) * (3.14159 / 180.0)
+        # # Convert the orientation from radians to a quaternion.
+        # orientation_quat = euler2quat(0, 0, orientation_rads)
+        # odometry_msg.pose.pose.orientation = Quaternion(x=orientation_quat[1],
+        #                                                 y=orientation_quat[2],
+        #                                                 z=orientation_quat[3],
+        #                                                 w=orientation_quat[0])
+        # self._odometry_pub.publish(odometry_msg)
 
 def main(args=None):
     rclpy.init(args=args)

@@ -8,6 +8,7 @@ def generate_launch_description():
                 package='earthrovers_ros',
                 executable='base',
                 name='base',
+                arguments=['--ros-args', '--log-level', "debug"]
             ),
             Node(
                 package='earthrovers_ros',

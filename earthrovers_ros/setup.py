@@ -26,7 +26,9 @@ setup(
     entry_points={
         'console_scripts': [
             'base = earthrovers_ros.base:main',
-            'camera = earthrovers_ros.camera:main'
+            'camera = earthrovers_ros.camera:main',
+            'nav = earthrovers_ros.nav:main',
+            'mock_gps = earthrovers_ros.mock_gps:main',
         ],
     },
 )
