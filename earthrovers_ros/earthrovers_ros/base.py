@@ -157,7 +157,7 @@ class BaseNode(Node):
         """
 
         # Create common timestamp.
-        timestamp = Time(nanoseconds=int(response_json["timestamp"] * 1e9))
+        timestamp = Time(nanoseconds=int(float(response_json["timestamp"]) * 1e9))
 
         # Parse, populate, and publish the IMU data.
         # NOTE: The Earth Rover SDK treats x as up, y as left, and z as
@@ -198,7 +198,7 @@ class BaseNode(Node):
         # could cause problems for downstream state-estimation systems...look
         # into this more later!
         gps_msg = NavSatFix()
-        gps_msg.header.stamp = timestamp
+        gps_msg.header.stamp = timestamp.to_msg()
         gps_msg.header.frame_id = "gps_link"
         gps_msg.latitude = response_json["latitude"]
         gps_msg.longitude = response_json["longitude"]
