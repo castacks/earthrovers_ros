@@ -8,7 +8,7 @@ import pyproj
 class MockGpsNode(Node):
     def __init__(self):
         super().__init__('mock_gps_node')
-        self.publisher_ = self.create_publisher(NavSatFix, 'gps_fix', 10)
+        self.publisher_ = self.create_publisher(NavSatFix, 'gps', 10)
         self.timer_ = self.create_timer(1.0, self.publish_gps_fix)
         # self.gps_coordinates = [(30.48243713, 114.3026428), # First coord will be our initial GPS position.
         #                         (30.48268318, 114.3028047), 
@@ -18,10 +18,21 @@ class MockGpsNode(Node):
         #                         (30.48343713, 114.3036428)]
         
         """
-        
-        {"checkpoints_list":[{"id":697,"sequence":1,"latitude":"30.4823951721","longitude":"114.3026275635"},{"id":698,"sequence":2,"latitude":"30.48272","longitude":"114.3026034"},{"id":699,"sequence":3,"latitude":"30.4823951721","longitude":"114.3026275635"}],"latest_scanned_checkpoint":0}
+        gps_waypoint_json = {"checkpoints_list":[{"id":697,"sequence":1,"latitude":"30.48239","longitude":"114.3026275635"},
+                                                 {"id":698,"sequence":2,"latitude":"30.48272","longitude":"114.3026434"},
+                                                 {"id":699,"sequence":3,"latitude":"30.48239","longitude":"114.30266"},
+                                                 {"id":700,"sequence":4,"latitude":"30.48272","longitude":"114.30268"},
+                                                 {"id":701,"sequence":5,"latitude":"30.48239","longitude":"114.3028"},
+                                                 {"id":702,"sequence":6,"latitude":"30.48272","longitude":"114.3029"},
+                                                 {"id":703,"sequence":7,"latitude":"30.48239","longitude":"114.303"}],
         """
-        checkpoints = [(30.4823951721, 114.3026275635), (30.48272, 114.3026034), (30.4823951721, 114.3026275635)]
+        checkpoints = [(30.48239,114.3026275635), 
+                        (30.48272,114.3026434),
+                        (30.48239,114.30266),
+                        (30.48272,114.30268),
+                        (30.48239,114.3028),
+                        (30.48272,114.3029),
+                        (30.48239,114.303)]
         # Make a second version of the above list that contains the original gps
         # coordinate waypoints, but with five interpolated waypoints between
         # each pair of waypoints.

@@ -52,6 +52,7 @@ class NavNode(Node):
         # Not permanent, just for now.
         self.__odom_waypoints_publisher = self.create_publisher(PoseArray, "odom_waypoints", 10)
         self.__odom_waypoints_timer = self.create_timer(1.0, self.publish_odom_waypoints)
+        self.get_logger().info("Created Nav Node.")
 
     def gps_to_odom_callback(self, msg: NavSatFix):
         """Callback for the GPS subscriber. Logs the GPS data to the console.
@@ -59,7 +60,7 @@ class NavNode(Node):
         Args:
             msg (NavSatFix): The GPS data message.
         """
-        self.get_logger().info(f"Received GPS data: {msg}")
+        # self.get_logger().info(f"Received GPS data: {msg}")
 
         # If we haven't received the start GPS coordinates yet, store them.
         if self.__start_gps_coords is None:
@@ -100,7 +101,14 @@ class NavNode(Node):
         # TODO: Get these from a service in the base node. FOR NOW, we are just
         # hardcoding these waypoints. Just paste these from the result of
         # hitting the checkpoint-list endpoint in the SDK API.
-        gps_waypoint_json = {"checkpoints_list":[{"id":697,"sequence":1,"latitude":"30.4823951721","longitude":"114.3026275635"},{"id":698,"sequence":2,"latitude":"30.48272","longitude":"114.3026034"},{"id":699,"sequence":3,"latitude":"30.4823951721","longitude":"114.3026275635"}],"latest_scanned_checkpoint":0}
+        gps_waypoint_json = {"checkpoints_list":[{"id":697,"sequence":1,"latitude":"30.48239","longitude":"114.3026275635"},
+                                                 {"id":698,"sequence":2,"latitude":"30.48272","longitude":"114.3026434"},
+                                                 {"id":699,"sequence":3,"latitude":"30.48239","longitude":"114.30266"},
+                                                 {"id":700,"sequence":4,"latitude":"30.48272","longitude":"114.30268"},
+                                                 {"id":701,"sequence":5,"latitude":"30.48239","longitude":"114.3028"},
+                                                 {"id":702,"sequence":6,"latitude":"30.48272","longitude":"114.3029"},
+                                                 {"id":703,"sequence":7,"latitude":"30.48239","longitude":"114.303"}],
+                             "latest_scanned_checkpoint":0}
         gps_waypoints = [(float(waypoint["latitude"]), float(waypoint["longitude"])) for waypoint in gps_waypoint_json["checkpoints_list"]]
 
         # Create a PoseArray message to store the waypoints.
@@ -125,6 +133,7 @@ class NavNode(Node):
 
         # Publish the PoseArray message.
         self.__odom_waypoints_publisher.publish(odom_waypoints)
+        self.get_logger().info("Published odometry waypoints.")
         
 def main(args=None):
     rclpy.init(args=args)
