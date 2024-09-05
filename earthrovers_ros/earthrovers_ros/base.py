@@ -9,6 +9,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist, Quaternion
 from sensor_msgs.msg import Imu, MagneticField, NavSatFix
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Float32
 from transforms3d.euler import euler2quat
 
 # from conversions import degs_to_rads, gs_to_ms2, lsb_to_tesla
@@ -26,7 +27,7 @@ class BaseNode(Node):
         self.declare_parameter("max_speed_ms", 0.94)
         # TODO: Need to determine this value. Guessing 1.57 rad/s for now.
         self.declare_parameter("max_angular_speed_rads", 1.57)
-        self.declare_parameter("earthrover_sdk_url", "http://localhost:8000")
+        self.declare_parameter("earthrover_sdk_url", "http://127.0.0.1:8000")
         self.declare_parameter("data_publish_rate_hz", 1.0)
 
         # Create a subscriber for cmd_vel Twist messages. Will parse these and
@@ -46,6 +47,7 @@ class BaseNode(Node):
         self._magnetic_field_pub = self.create_publisher(msg_type=MagneticField, topic="magnetic_field", qos_profile=10)
         self._odometry_pub = self.create_publisher(msg_type=Odometry, topic="odom", qos_profile=10)
         self._gps_pub = self.create_publisher(msg_type=NavSatFix, topic="gps", qos_profile=10)
+        self._ori_pub = self.create_publisher(msg_type=Float32, topic="orientation", qos_profile=10)
 
         # TODO: Create mission control services. I.e., start mission, end
         # mission, checkpoint list, checkpoint reached.
@@ -155,7 +157,6 @@ class BaseNode(Node):
             "rpm": [0, 0, 0, 0]
         }
         """
-
         # Create common timestamp.
         timestamp = Time(nanoseconds=int(float(response_json["timestamp"]) * 1e9))
 
@@ -203,6 +204,11 @@ class BaseNode(Node):
         gps_msg.latitude = response_json["latitude"]
         gps_msg.longitude = response_json["longitude"]
         self._gps_pub.publish(gps_msg)
+        
+        # Publish the orientation data.
+        orientation_msg = Float32()
+        orientation_msg.data = float(response_json["orientation"])
+        self._ori_pub.publish(orientation_msg)
 
         # # Populate and publish an Odometry message with the provided speed and
         # # orientation.
