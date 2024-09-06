@@ -139,6 +139,7 @@ class NavNode(Node):
         # hardcoding these waypoints. Just paste these from the result of
         # hitting the checkpoint-list endpoint in the SDK API.
         gps_waypoint_json = {"checkpoints_list":[{"id":6075,"sequence":1,"latitude":"10.03320789","longitude":"-84.21801758"},{"id":6076,"sequence":2,"latitude":"10.033322","longitude":"-84.217094"},{"id":6077,"sequence":3,"latitude":"10.03320789","longitude":"-84.21801758"}],"latest_scanned_checkpoint":0}
+
         gps_waypoints = [(float(waypoint["latitude"]), float(waypoint["longitude"])) for waypoint in gps_waypoint_json["checkpoints_list"]]
 
         # Create a PoseArray message to store the waypoints.
