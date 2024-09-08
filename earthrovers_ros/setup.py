@@ -29,7 +29,7 @@ setup(
             'camera = earthrovers_ros.camera:main',
             'nav = earthrovers_ros.nav:main',
             'mock_gps = earthrovers_ros.mock_gps:main',
-            'mission_services = earthrovers_ros.mission_services:main',
+            'mission_control = earthrovers_ros.mission_control:main',
         ],
     },
 )

@@ -11,9 +11,6 @@ from sensor_msgs.msg import Imu, MagneticField, NavSatFix
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32
 from transforms3d.euler import euler2quat
-
-from earthrovers_interfaces.srv import StartMission, EndMission, GetCheckpoints, CheckpointReached
-
 # from conversions import degs_to_rads, gs_to_ms2, lsb_to_tesla
 
 # TODO: Update the basenode to be implemented as a LifecycleNode. This would
