@@ -1,2 +1,4 @@
 ---
 bool checkpoint_reached
+float32 approximate_distance_to_checkpoint
+string message
