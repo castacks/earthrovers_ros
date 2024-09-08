@@ -20,7 +20,7 @@ class MissionControl(Node):
 
         # Create mission management services.
         self._start_mission_srv = self.create_service(StartMission, "start_mission", self._start_mission_callback)
-        # self._end_mission_srv = self.create_service(EndMission, "end_mission", self._end_mission_callback)
+        self._end_mission_srv = self.create_service(EndMission, "end_mission", self._end_mission_callback)
         # self._checkpoint_list_srv = self.create_service(GetCheckpoints, "get_checkpoints", self._get_checkpoints_callback)
         # self._checkpoint_reached_srv = self.create_service(CheckpointReached,
         # "checkpoint_reached", self._checkpoint_reached_callback)

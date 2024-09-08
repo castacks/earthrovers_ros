@@ -141,8 +141,15 @@ class BaseNode(Node):
         self.get_logger().debug(f"data GET request took {end - start} seconds.")
 
         # Parse the response JSON.
-        response_json = response.json()
-        self.get_logger().debug(f"Data: {response_json}")
+        try:
+            response_json = response.json()
+            self.get_logger().debug(f"Data: {response_json}")
+        except ValueError as e:
+            self.get_logger().error(f"Failed to parse response JSON: {e}")
+            return
+        except Exception as e:
+            self.get_logger().error(f"Unknown error while trying to parse /data response: {e}")
+            return
 
         # TODO: This functionality should not be present in the future if this
         # node re-implemented as a LifecycleNode. However, having a check like
