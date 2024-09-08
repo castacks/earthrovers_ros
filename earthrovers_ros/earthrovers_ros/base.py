@@ -12,8 +12,19 @@ from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32
 from transforms3d.euler import euler2quat
 
+from earthrovers_interfaces.srv import StartMission, EndMission, GetCheckpoints, CheckpointReached
+
 # from conversions import degs_to_rads, gs_to_ms2, lsb_to_tesla
 
+# TODO: Update the basenode to be implemented as a LifecycleNode. This would
+# allow us to control (via inherited services) when the different parts of this
+# node start and stop. Why is this helpful? One example is that we don't want
+# the node to begin hitting the /data endpoints until we've started a mission.
+# Ideally, according to our behavior tree, if a mission is started successfully,
+# we could then call the "on_configure" lifecycle node service to configure this
+# node and set up its timer, and then "on_activate" to start the timer and begin
+# hitting the /data endpoint. Once we have a behavior tree implemented, this
+# isn't that much work.
 class BaseNode(Node):
     """Node that subscribes to Twist messages on the cmd_vel topic and sends an
     HTTP POST request with the provided angular and linear velocities.
@@ -48,9 +59,6 @@ class BaseNode(Node):
         self._odometry_pub = self.create_publisher(msg_type=Odometry, topic="odom", qos_profile=10)
         self._gps_pub = self.create_publisher(msg_type=NavSatFix, topic="gps", qos_profile=10)
         self._ori_pub = self.create_publisher(msg_type=Float32, topic="orientation", qos_profile=10)
-
-        # TODO: Create mission control services. I.e., start mission, end
-        # mission, checkpoint list, checkpoint reached.
 
     def _cmd_vel_callback(self, twist_msg: Twist) -> None:
         """Callback function for the cmd_vel topic. Receives a Twist message,
@@ -138,6 +146,13 @@ class BaseNode(Node):
         # Parse the response JSON.
         response_json = response.json()
         self.get_logger().debug(f"Data: {response_json}")
+
+        # TODO: This functionality should not be present in the future if this
+        # node re-implemented as a LifecycleNode. However, having a check like
+        # this is still helpful in the name of fault tolerance/identification.
+        if "timestamp" not in response_json:
+            self.get_logger().warn("Timestamp not found in response JSON. Ignoring response. Likely need to start a mission.")
+            return
 
         """Example response:
         {
