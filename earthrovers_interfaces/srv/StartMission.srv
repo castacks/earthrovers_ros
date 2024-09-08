@@ -1,2 +1,3 @@
 ---
-bool mission_started
+bool mission_started    # True if mission started successfully
+string message          # Response message from the endpoint

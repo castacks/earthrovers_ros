@@ -49,6 +49,7 @@ class MissionControl(Node):
         except requests.exceptions.RequestException as e:
             self.get_logger().error(f"Failed to start mission: {e}")
             response.mission_started = False
+            response.message = f"Failed to start mission: {e}"
             return response
         end = time.perf_counter()
         self.get_logger().debug(f"start_mission POST request took {end - start} seconds.")
@@ -59,12 +60,15 @@ class MissionControl(Node):
         if post_response.status_code == 200:
             self.get_logger().info("Mission started successfully.")
             response.mission_started = True
+            response.message = "Mission started successfully."
         elif post_response.status_code == 400:
-            self.get_logger().error("Failed to start mission; Bot Unavailable.")
+            self.get_logger().error("Failed to start mission; Bot Unavailable. Response Code: 400")
             response.mission_started = False
+            response.message = "Failed to start mission; Bot Unavailable. Response Code: 400"
         else:
             self.get_logger().error(f"Failed to start mission; Unknown Error. Response Code: {post_response.status_code}, Response Text: {post_response.text}")
             response.mission_started = False
+            response.message = f"Failed to start mission with unknown error. Response Code: {post_response.status_code}, Response Text: {post_response.text}"
 
         return response
     
@@ -92,6 +96,7 @@ class MissionControl(Node):
         except requests.exceptions.RequestException as e:
             self.get_logger().error(f"Failed to end mission: {e}")
             response.mission_ended = False
+            response.message = f"Failed to end mission: {e}"
             return response
         end = time.perf_counter()
         self.get_logger().debug(f"end_mission POST request took {end - start} seconds.")
@@ -102,12 +107,15 @@ class MissionControl(Node):
         if post_response.status_code == 200:
             self.get_logger().info("Mission ended successfully.")
             response.mission_ended = True
+            response.message = "Mission ended successfully."
         elif post_response.status_code == 400:
-            self.get_logger().error("Failed to end mission; Bot Unavailable.")
+            self.get_logger().error("Failed to end mission; Bot Unavailable. Response Code: 400")
             response.mission_ended = False
+            response.message = f"Failed to end mission; Bot Unavailable. Response Code: 400"
         else:
             self.get_logger().error(f"Failed to end mission; Unknown Error. Response Code: {post_response.status_code}, Response Text: {post_response.text}")
             response.mission_ended = False
+            response.message = f"Failed to end mission with unknown error. Response Code: {post_response.status_code}, Response Text: {post_response.text}"
 
         return response
     
