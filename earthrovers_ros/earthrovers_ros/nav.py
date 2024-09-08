@@ -59,6 +59,11 @@ class NavNode(Node):
         self.__odom_waypoints_publisher = self.create_publisher(PoseArray, "odom_waypoints", 10)
         self.__odom_waypoints_timer = self.create_timer(1.0, self.publish_odom_waypoints)
         self.get_logger().info("Created Nav Node.")
+
+        # TODO: Create "set-datum" service that sets the start GPS coordinates.
+
+        # TODO: Create a tf broadcaster that broadcasts the transform between
+        # the base_link and odom frame.
         
     def orientation_callback(self, msg: Float32):
         """Callback for the orientation subscriber. Logs the orientation data to
@@ -140,6 +145,77 @@ class NavNode(Node):
         # hitting the checkpoint-list endpoint in the SDK API.
         gps_waypoint_json = {"checkpoints_list":[{"id":6075,"sequence":1,"latitude":"10.03320789","longitude":"-84.21801758"},{"id":6076,"sequence":2,"latitude":"10.033322","longitude":"-84.217094"},{"id":6077,"sequence":3,"latitude":"10.03320789","longitude":"-84.21801758"}],"latest_scanned_checkpoint":0}
         gps_waypoints = [(float(waypoint["latitude"]), float(waypoint["longitude"])) for waypoint in gps_waypoint_json["checkpoints_list"]]
+
+        # TODO: For MVP, could do the following:
+        # 1. Create a service that returns the GPS waypoints (this would be
+        #    defined mission control). Returns true/false for success/failure as
+        #    well.
+        # 2. Create a service that returns the odometry waypoints GIVEN the GPS
+        #    waypoints (this would be defined in this "nav" node).
+        # 3. TEMPORARY until we use a behavior tree: Create a node that starts
+        #    up, gets the GPS mission waypoints, converts them to the
+        #    world-fixed odometry frame, and stores them. Then, for every
+        #    iteration of a timer, it checks our GPS position 
+        
+        # Additionally, somewhat tangential to the above, this node should also
+        # implement a "set-datum" service that sets the start GPS coordinates.
+        # It would take a GPS coordinate as input.
+
+        # The idea is that the capabilities we are providing here should be a
+        # drop in replacement for what robot_localization provides.
+        # robot_localization provides:
+        # 1. Publishes filtered odometry state estimate
+        # 2. Publishes the odometry transform from base_link to odom
+        # nav_sat_transform within robo_localization provides:
+        # 1. Publishes the transform from utm to odom
+        # 2. Fuses the GPS data with the odometry data to produce yet another
+        #    Odometry estimate. This is kind of what we do (but no fusion).
+        # 3. Provides a set_datum service to set the start GPS coordinates. Can
+        #    also use the first obtained GPS position as the start coordinates.
+
+        # For transforming a sequence of GPS waypoints to the odometry frame,
+        # the nav_sat_transform node (or nav node) can publish a utm to odom
+        # transform based on that start GPS coordinate--so no problem there.
+
+        # HOWEVER, NEITHER currently provides a means of converting from GPS -->
+        # UTM coordinates. nav_sat_transform_node DOES DO THIS internally--it
+        # transforms GPS coordinates to UTM coordinates-->odom coordinates so
+        # that it can fuse them with the odometry data and provide a better
+        # estimate.
+
+        # the navsat_transform node uses a "navsat_conversions.h" file according
+        # to one of the developers:
+        # https://answers.ros.org/question/251347/gps-waypoint-navigation-with-robot_localization-and-navsat_transform_node/
+        # This node takes care of figuring out which UTM grid we are in based on
+        # the GPS coordinates, and then transforms the GPS coordinates to
+        # coordinates expressed in that current UTM grid frame.
+
+        # FOR US, we do not have access to that in python--but we CAN use
+        # pyproj TO DO THE EXACT SAME THING.
+
+        # Now, that developer said that nav_sat_transform should really provide
+        # this conversion as a service in the future. Because that is still not
+        # available, we can provide this as a service in our nav node. We can
+        # write two services, as well: one that transforms a single GeoPose
+        # point to a Pose in the odometry frame (or whatever child world-fixed
+        # is specified), and another that transforms a list of GeoPose points to
+        # a PoseArray in the specified world-fixed frame (odom).
+
+        # Additionally, because the nav_sat_transform node and our node (that
+        # provides the waypoint transform services) will have to coexist, the
+        # main important thing is that they share the same datum. To ensure
+        # this, each node should have an identical set_datum service that
+        # receives a GeoPose.
+
+        # To support the above, we need a service in one of our nodes that can
+        # "get the latest GPS position." Then, in an ideal world, a behavior
+        # tree could could first hit the service to get the latest GPS position,
+        # and then hit the set-datum service of both the nav node nad
+        # nav_sat_transform node to ensure they are both using the same datum.
+        # If we don't have a behavior tree just yet, we can also just create a
+        # set_datum_current service in nav node that sets its own datum AND call
+        # the set_datum service of the nav_sat_transform node using the most
+        # recent GPS position it has received.
 
         # Create a PoseArray message to store the waypoints.
         odom_waypoints = PoseArray()
