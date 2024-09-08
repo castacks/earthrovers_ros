@@ -22,6 +22,8 @@
 
   <depend>earthrovers_interfaces</depend>
 
+  <depend>geographic_msgs</depend>
+
   <export>
     <build_type>ament_python</build_type>
   </export>
