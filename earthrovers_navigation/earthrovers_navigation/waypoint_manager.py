@@ -8,6 +8,8 @@ implement this functionality.
 import time
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.callback_groups import ReentrantCallbackGroup
 
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseArray
@@ -20,18 +22,24 @@ class WaypointManagerNode(Node):
     """
 
     def __init__(self):
-        super().__init__("mission_controller")
+        super().__init__("waypoint_manager")
+
+        # Create Reentrant callback group. Allows callbacks to be run in
+        # parallel in different threads.
+        # TODO: Will it be necessary to create separate callback groups to
+        # separate the subscriber callbacks and service-related callbacks?
+        self._reentrant_callback_group = ReentrantCallbackGroup()
 
         # Create odom subscriber.
-        self._odom_sub = self.create_subscription(Odometry, "odom", self._odom_callback, 10)
+        self._odom_sub = self.create_subscription(Odometry, "odom", self._odom_callback, 10, callback_group=self._reentrant_callback_group)
 
         # Create PoseArray publisher that we'll use to publish the waypoints
         # MPPI should navigate to / create a trajectory to.
-        self._waypoint_pub = self.create_publisher(PoseArray, "next_waypoints", 10)
+        self._waypoint_pub = self.create_publisher(PoseArray, "next_waypoints", 10, callback_group=self._reentrant_callback_group)
 
         # Create timer to call the waypoint manager state machine at a fixed
         # rate.
-        self.create_timer(1.0, self._waypoint_manager_state_machine)
+        self.create_timer(1.0, self._waypoint_manager_state_machine, callback_group=self._reentrant_callback_group)
 
         # Initialize waypoint list to empty.
         self._waypoints = []
@@ -40,8 +48,8 @@ class WaypointManagerNode(Node):
         self._next_waypoint = None
 
         # Create service clients.
-        self._get_checkpoints_client = self.create_client(GetCheckpoints, "get_checkpoints")
-        self._gps_to_world_frame_client = self.create_client(GpsToWorldFrame, "transform_gps_to_utm")
+        self._get_checkpoints_client = self.create_client(GetCheckpoints, "get_checkpoints", callback_group=self._reentrant_callback_group)
+        self._gps_to_world_frame_client = self.create_client(GpsToWorldFrame, "transform_gps_to_utm", callback_group=self._reentrant_callback_group)
         
         # TODO: Hit the service to get the GPS waypoint list.
         self._get_checkpoints_client.wait_for_service()
@@ -131,8 +139,11 @@ class WaypointManagerNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
+    executor = MultiThreadedExecutor(num_threads=8)
     waypoint_manager_node = WaypointManagerNode()
-    rclpy.spin(waypoint_manager_node)
+    executor.add_node(waypoint_manager_node)
+    executor.spin()
+    executor.shutdown()
     waypoint_manager_node.destroy_node()
     rclpy.shutdown()
 
