@@ -1,7 +1,6 @@
 """Module defining the a node that provides mission services."""
 
 import time
-import uuid
 import requests
 import rclpy
 from rclpy.node import Node
@@ -9,13 +8,13 @@ from geographic_msgs.msg import GeoPoint
 
 from earthrovers_interfaces.srv import StartMission, EndMission, GetCheckpoints, CheckpointReached
 
-class MissionControl(Node):
+class MissionController(Node):
     """Node that defines a set of services for interacting with the Earth Rovers
     SDK mission endpoints.
     """
 
     def __init__(self):
-        super().__init__("mission_control")
+        super().__init__("mission_controller")
 
         # Declare parameters.
         self.declare_parameter("earthrover_sdk_url", "http://127.0.0.1:8000")
@@ -238,11 +237,10 @@ class MissionControl(Node):
         return response
 
 def main(args=None):
-    """Main entry point for the mission services node."""
     rclpy.init(args=args)
-    mission_control_node = MissionControl()
-    rclpy.spin(mission_control_node)
-    mission_control_node.destroy_node()
+    mission_controller_node = MissionController()
+    rclpy.spin(mission_controller_node)
+    mission_controller_node.destroy_node()
     rclpy.shutdown()
 
 if __name__ == "__main__":
