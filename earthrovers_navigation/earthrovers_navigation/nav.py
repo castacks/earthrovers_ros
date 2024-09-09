@@ -179,8 +179,37 @@ class NavNode(Node):
 
     def _transform_gps_to_world_frame_callback(self, request, response):
         """Transform a list of GPS coordinates to the specified world-fixed
-        frame."""
+        frame.
         
+        Args:
+            request (GpsToWorldFrame.Request): Request object containing the
+                list of GPS coordinates to transform.
+            response (GpsToWorldFrame.Response): Response object containing the
+                transformed coordinates.
+        
+        Returns:
+            GpsToWorldFrame.Response: Response object containing the transformed
+            coordinates.
+        """
+
+        # If we don't have a datum, we can't transform the coordinates.
+        if self._gps_datum is None:
+            self.get_logger().warn("Cannot transform GPS coordinates to world frame because datum is not yet set.")
+            response.world_frame_points = []
+            response.success = False
+            response.message = "Datum not yet set."
+            return response
+
+        # Convert each GeoPoint in the provided list to be expressed from the
+        # perspective of the world-fixed frame.
+        transformed_coords = []
+        for gps_point in request.gps_coords:
+            transformed_coords.append(gps_to_world(gps_point, self._gps_datum))
+
+        response.world_frame_points = transformed_coords
+        response.success = True
+        response.message = "GPS coordinates transformed to world frame."
+        return response
 
     def _publish_utm_to_world_frame(self):
         """Publish the UTM-->world_frame transform. This will be a static
