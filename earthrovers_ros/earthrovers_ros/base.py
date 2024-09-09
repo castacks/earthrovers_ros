@@ -6,7 +6,7 @@ import requests
 import rclpy
 from rclpy.time import Time
 from rclpy.node import Node
-from geometry_msgs.msg import Twist, Quaternion
+from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu, MagneticField, NavSatFix
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32
