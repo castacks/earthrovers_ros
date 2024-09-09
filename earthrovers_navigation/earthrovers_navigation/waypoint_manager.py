@@ -5,11 +5,14 @@ NOTE: This whole node should not be necessary once we have a behavior tree to
 implement this functionality.
 """
 
+import time
 import rclpy
 from rclpy.node import Node
 
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseArray
+
+from earthrovers_interfaces.srv import GetCheckpoints, GpsToWorldFrame
 
 class WaypointManagerNode(Node):
     """Node that defines a set of services for interacting with the Earth Rovers
@@ -36,9 +39,57 @@ class WaypointManagerNode(Node):
         # Initialize next waypoint to None.
         self._next_waypoint = None
 
+        # Create service clients.
+        self._get_checkpoints_client = self.create_client(GetCheckpoints, "get_checkpoints")
+        self._gps_to_world_frame_client = self.create_client(GpsToWorldFrame, "transform_gps_to_utm")
+        
         # TODO: Hit the service to get the GPS waypoint list.
+        self._get_checkpoints_client.wait_for_service()
+        checkpoints_future = self._get_checkpoints_client.call_async(GetCheckpoints.Request())
+        while not checkpoints_future.done():
+            time.sleep(0.5)
+            self.get_logger().info("Waiting for checkpoints...")
+        # Check the service result and store the received checkpoints.
+        checkpoints_response = checkpoints_future.result()
+        if checkpoints_response.success:
+            self._waypoints = checkpoints_response.checkpoints
+            self.get_logger().info(f"Received {len(self._waypoints)} waypoints: {self._waypoints}")
+        else:
+            self.get_logger().error("Failed to receive waypoints.")
+            # TODO: In future, if implemented as a lifecycle node, could move
+            # into a failure state. For now, raise an exception.
+            raise Exception("Failed to receive waypoints.")
+
         # TODO: Hit the service to transform the GPS waypoints to the odom
         # frame.
+        self._gps_to_world_frame_client.wait_for_service()
+        self._transform_checkpoints_future = self._gps_to_world_frame_client.call_async(GpsToWorldFrame.Request())
+        while not self._transform_checkpoints_future.done():
+            time.sleep(0.5)
+            self.get_logger().info("Waiting for transformed checkpoints...")
+        # Check the service result and store the transformed checkpoints.
+        transformed_checkpoints_response = self._transform_checkpoints_future.result()
+        if transformed_checkpoints_response.success:
+            self._waypoints = transformed_checkpoints_response.checkpoints
+            self.get_logger().info(f"Transformed waypoints: {self._waypoints}")
+        else:
+            self.get_logger().error("Failed to transform waypoints.")
+            raise Exception("Failed to transform waypoints.")
+        
+        # There must be something fundamentally incorrect about my understanding
+        # of how you are supposed to call/use services in ROS2 nodes. Every
+        # example I can find for a client is strictly to call a service once and
+        # then terminate. At the very least, for running that checkpoint
+        # service, we need to be able to do this repeatedly. Sure, I could hit
+        # the endpoint from this node, but then what's the point of creating ROS
+        # services??? For now, I think I am just going to synchronously call
+        # these services.
+
+        # Update: Apparently, not alone in this:
+        # https://answers.ros.org/question/343279/ros2-how-to-implement-a-sync-service-client-in-a-node/
+        # For now, using this guy's answer:
+        # https://answers.ros.org/answers/354547/revisions/
+        
 
     # What we roughly need from this node:
     # 1. On boot, needs to hit a service and get a waypoint list.
