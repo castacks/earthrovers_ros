@@ -8,6 +8,9 @@ implement this functionality.
 import rclpy
 from rclpy.node import Node
 
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseArray
+
 class WaypointManagerNode(Node):
     """Node that defines a set of services for interacting with the Earth Rovers
     SDK mission endpoints.
@@ -15,6 +18,27 @@ class WaypointManagerNode(Node):
 
     def __init__(self):
         super().__init__("mission_controller")
+
+        # Create odom subscriber.
+        self._odom_sub = self.create_subscription(Odometry, "odom", self._odom_callback, 10)
+
+        # Create PoseArray publisher that we'll use to publish the waypoints
+        # MPPI should navigate to / create a trajectory to.
+        self._waypoint_pub = self.create_publisher(PoseArray, "next_waypoints", 10)
+
+        # Create timer to call the waypoint manager state machine at a fixed
+        # rate.
+        self.create_timer(1.0, self._waypoint_manager_state_machine)
+
+        # Initialize waypoint list to empty.
+        self._waypoints = []
+
+        # Initialize next waypoint to None.
+        self._next_waypoint = None
+
+        # TODO: Hit the service to get the GPS waypoint list.
+        # TODO: Hit the service to transform the GPS waypoints to the odom
+        # frame.
 
     # What we roughly need from this node:
     # 1. On boot, needs to hit a service and get a waypoint list.
