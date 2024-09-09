@@ -18,6 +18,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/StartMission.srv"
   "srv/CheckpointReached.srv"
   "srv/GetCheckpoints.srv"
+  "srv/GpsToUtm.srv"
+  "srv/GpsToWorldFrame.srv"
   DEPENDENCIES geometry_msgs geographic_msgs # GetCheckpoints.srv uses geometry_msgs
 )
 

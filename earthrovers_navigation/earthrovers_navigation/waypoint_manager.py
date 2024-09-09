@@ -1,5 +1,8 @@
 """Node for figuring out which waypoint(s) should be tracked by a downstream
 motion planner.
+
+NOTE: This whole node should not be necessary once we have a behavior tree to
+implement this functionality.
 """
 
 import rclpy
