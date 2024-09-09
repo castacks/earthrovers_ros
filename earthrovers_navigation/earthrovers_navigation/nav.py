@@ -222,10 +222,16 @@ class NavNode(Node):
             self.get_logger().warn("Cannot publish UTM-->world_frame transform because datum is not yet set.")
             return
         
-        # If we do have the datum, once we compute where this lands in the UTM
-        # frame, we basically have the UTM-->world_frame transform (as the datum
-        # is what we subtract from the current state estimate in the world
-        # frame).
+        # This transform is essentially just the datum expressed in the UTM
+        # frame.
+        
+        # TODO: Also want to publish the world_frame-->base_link transform (or
+        # specifically the odom-->base_link transform), as this is the
+        # difference between the current GPS-->UTM coordinates and the UTM
+        # datum. In the future, rather than just computing this based on our
+        # latest GPS fix, this would be computed as the difference between the
+        # datum expressed in the odom frame and the most recent odometry
+        # estimate pose provided by the robot_localization EKF.
 
     def _orientation_callback(self, orientation_msg: Float32):
         """Callback for the orientation subscriber. Will take the orientation
