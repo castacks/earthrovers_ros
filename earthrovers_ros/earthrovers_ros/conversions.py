@@ -29,12 +29,12 @@ def degs_to_rads(degrees_s: float) -> float:
     DEG_IN_PI = 180.0
     return degrees_s * (PI / DEG_IN_PI)
 
-def lsb_to_guass(lsb: int, lsb_per_gauss: float) -> float:
+def lsb_to_gauss(lsb: int, lsb_per_gauss: int) -> float:
     """Converts magnetic field strength from LSB to gauss.
 
     Args:
         lsb (int): The magnetic field strength in LSB.
-        lsb_per_gauss (float): The number of LSBs per gauss for the sensor ==
+        lsb_per_gauss (int): The number of LSBs per gauss for the sensor ==
         the sensor's sensitivity/resolution. This is typically computed as the
         range / 2^number_of_bits in the sensor's ADC output.
 
@@ -52,20 +52,20 @@ def gauss_to_tesla(gauss: float) -> float:
     Returns:
         float: The magnetic field strength in tesla.
     """
-    GUASS_PER_TESLA = 10000
-    return gauss * (1.0/GUASS_PER_TESLA)
+    gauss_PER_TESLA = 10000
+    return gauss * (1.0/gauss_PER_TESLA)
 
-def lsb_to_tesla(lsb: int, lsb_per_gauss: float) -> float:
+def lsb_to_tesla(lsb: int, lsb_per_gauss: int) -> float:
     """Converts magnetic field strength from LSB to tesla.
 
     Args:
         lsb (int): The magnetic field strength in LSB.
-        lsb_per_gauss (float): The number of LSBs per gauss for the sensor ==
+        lsb_per_gauss (int): The number of LSBs per gauss for the sensor ==
         the sensor's sensitivity/resolution. This is typically computed as the
         range / 2^number_of_bits in the sensor's ADC output.
 
     Returns:
         float: The magnetic field strength in tesla.
     """
-    gauss = lsb_to_guass(lsb, lsb_per_gauss)
+    gauss = lsb_to_gauss(lsb, lsb_per_gauss)
     return gauss_to_tesla(gauss)
