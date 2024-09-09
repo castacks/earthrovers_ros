@@ -191,56 +191,62 @@ class BaseNode(Node):
         # NOTE: The Earth Rover SDK treats x as up, y as left, and z as
         # backward. Convert to ROS coordinate system where x is forward, y is
         # left, and z is up.
-        imu_msg = Imu()
-        latest_accel_sample = response_json["accels"][-1]
-        latest_accel_sample_time = Time(nanoseconds=int(float(latest_accel_sample[3]) * 1e9))
-        imu_msg.header.stamp = latest_accel_sample_time.to_msg()
-        imu_msg.header.frame_id = "imu_link" # TODO: Parameterize this.
-        imu_msg.linear_acceleration.x = gs_to_ms2(-latest_accel_sample[2])  # x = -z
-        imu_msg.linear_acceleration.y = gs_to_ms2(latest_accel_sample[1])   # y = +y
-        imu_msg.linear_acceleration.z = gs_to_ms2(latest_accel_sample[0])   # z = +x
-        # TODO: Need linear acceleration covariance data from datasheet? For now,
-        # just using nonzero placeholder values.
-        imu_msg.linear_acceleration_covariance = [0.0] * 9
-        imu_msg.linear_acceleration_covariance[0] = 0.1
-        imu_msg.linear_acceleration_covariance[4] = 0.1
-        imu_msg.linear_acceleration_covariance[8] = 0.1
+        try:
+            imu_msg = Imu()
+            latest_accel_sample = response_json["accels"][-1]
+            latest_accel_sample_time = Time(nanoseconds=int(float(latest_accel_sample[3]) * 1e9))
+            imu_msg.header.stamp = latest_accel_sample_time.to_msg()
+            imu_msg.header.frame_id = "imu_link" # TODO: Parameterize this.
+            imu_msg.linear_acceleration.x = gs_to_ms2(-latest_accel_sample[2])  # x = -z
+            imu_msg.linear_acceleration.y = gs_to_ms2(latest_accel_sample[1])   # y = +y
+            imu_msg.linear_acceleration.z = gs_to_ms2(latest_accel_sample[0])   # z = +x
+            # TODO: Need linear acceleration covariance data from datasheet? For now,
+            # just using nonzero placeholder values.
+            imu_msg.linear_acceleration_covariance = [0.0] * 9
+            imu_msg.linear_acceleration_covariance[0] = 0.1
+            imu_msg.linear_acceleration_covariance[4] = 0.1
+            imu_msg.linear_acceleration_covariance[8] = 0.1
 
-        # Set up the angular velocity and its covariance matrix.
-        latest_gyro_sample = response_json["gyros"][-1]
-        imu_msg.angular_velocity.x = degs_to_rads(-latest_gyro_sample[2]) # x = -z  # TODO: Does this need inverted?
-        imu_msg.angular_velocity.y = degs_to_rads(latest_gyro_sample[1]) # y = +y
-        imu_msg.angular_velocity.z = degs_to_rads(latest_gyro_sample[0]) # z = +x
-        # TODO: Find linear acceleration covariance data from datasheet? For now,
-        # just using nonzero placeholder values.
-        imu_msg.angular_velocity_covariance = [0.0] * 9
-        imu_msg.angular_velocity_covariance[0] = 0.1
-        imu_msg.angular_velocity_covariance[4] = 0.1
-        imu_msg.angular_velocity_covariance[8] = 0.1
-        # NOTE: Each gyro measurement has a slightly different timestamp from
-        # the corresponding accelerometer measurement. This might be okay, but
-        # maybe the more correct thing to do is to just create and publish a
-        # separate IMU message that has empty accel readings and only gyro (but
-        # with the correct timestamp).
-        self._imu_pub.publish(imu_msg)
+            # Set up the angular velocity and its covariance matrix.
+            latest_gyro_sample = response_json["gyros"][-1]
+            imu_msg.angular_velocity.x = degs_to_rads(-latest_gyro_sample[2]) # x = -z  # TODO: Does this need inverted?
+            imu_msg.angular_velocity.y = degs_to_rads(latest_gyro_sample[1]) # y = +y
+            imu_msg.angular_velocity.z = degs_to_rads(latest_gyro_sample[0]) # z = +x
+            # TODO: Find linear acceleration covariance data from datasheet? For now,
+            # just using nonzero placeholder values.
+            imu_msg.angular_velocity_covariance = [0.0] * 9
+            imu_msg.angular_velocity_covariance[0] = 0.1
+            imu_msg.angular_velocity_covariance[4] = 0.1
+            imu_msg.angular_velocity_covariance[8] = 0.1
+            # NOTE: Each gyro measurement has a slightly different timestamp from
+            # the corresponding accelerometer measurement. This might be okay, but
+            # maybe the more correct thing to do is to just create and publish a
+            # separate IMU message that has empty accel readings and only gyro (but
+            # with the correct timestamp).
+            self._imu_pub.publish(imu_msg)
+        except Exception as e:
+            self.get_logger().error(f"Failed to parse/publish IMU data: {e}")
 
         # Parse, populate, and publish the Magnetic Field data.
-        latest_mag_sample = response_json["mags"][-1]
-        magnetic_field_msg = MagneticField()
-        latest_mag_sample_time = Time(nanoseconds=int(float(latest_mag_sample[3]) * 1e9))
-        magnetic_field_msg.header.stamp = latest_mag_sample_time.to_msg()
-        magnetic_field_msg.header.frame_id = "imu_link"
-        lsb_per_gauss = self.get_parameter("magnetometer_sensitivity_lsb_per_gauss").get_parameter_value().integer_value
-        magnetic_field_msg.magnetic_field.x = lsb_to_tesla(-latest_mag_sample[2], lsb_per_gauss)  # x = -z
-        magnetic_field_msg.magnetic_field.y = lsb_to_tesla(latest_mag_sample[1], lsb_per_gauss)   # y = +y
-        magnetic_field_msg.magnetic_field.z = lsb_to_tesla(latest_mag_sample[0], lsb_per_gauss)   # z = +x
-        # TODO: Find magnetic field covariance data from datasheet? For now,
-        # just using nonzero placeholder values.
-        magnetic_field_msg.magnetic_field_covariance = [0.0] * 9
-        magnetic_field_msg.magnetic_field_covariance[0] = 0.1
-        magnetic_field_msg.magnetic_field_covariance[4] = 0.1
-        magnetic_field_msg.magnetic_field_covariance[8] = 0.1
-        self._magnetic_field_pub.publish(magnetic_field_msg)
+        try:
+            latest_mag_sample = response_json["mags"][-1]
+            magnetic_field_msg = MagneticField()
+            latest_mag_sample_time = Time(nanoseconds=int(float(latest_mag_sample[3]) * 1e9))
+            magnetic_field_msg.header.stamp = latest_mag_sample_time.to_msg()
+            magnetic_field_msg.header.frame_id = "imu_link"
+            lsb_per_gauss = self.get_parameter("magnetometer_sensitivity_lsb_per_gauss").get_parameter_value().integer_value
+            magnetic_field_msg.magnetic_field.x = lsb_to_tesla(-latest_mag_sample[2], lsb_per_gauss)  # x = -z
+            magnetic_field_msg.magnetic_field.y = lsb_to_tesla(latest_mag_sample[1], lsb_per_gauss)   # y = +y
+            magnetic_field_msg.magnetic_field.z = lsb_to_tesla(latest_mag_sample[0], lsb_per_gauss)   # z = +x
+            # TODO: Find magnetic field covariance data from datasheet? For now,
+            # just using nonzero placeholder values.
+            magnetic_field_msg.magnetic_field_covariance = [0.0] * 9
+            magnetic_field_msg.magnetic_field_covariance[0] = 0.1
+            magnetic_field_msg.magnetic_field_covariance[4] = 0.1
+            magnetic_field_msg.magnetic_field_covariance[8] = 0.1
+            self._magnetic_field_pub.publish(magnetic_field_msg)
+        except Exception as e:
+            self.get_logger().error(f"Failed to parse/publish Magnetic Field data: {e}")
 
         # TODO: Write helper function to compute wheel odometry from RPMs.
         # Parse, populate, and publish the Odometry data.
@@ -251,20 +257,22 @@ class BaseNode(Node):
         # multiple times as if they were actually different measurements. This
         # could cause problems for downstream state-estimation systems...look
         # into this more later!
-        gps_msg = NavSatFix()
-        gps_msg.header.stamp = timestamp.to_msg()
-        gps_msg.header.frame_id = "gps_link"
-        gps_msg.latitude = response_json["latitude"]
-        gps_msg.longitude = response_json["longitude"]
-        # NOTE: Real covariance values not known, experimenting with this to
-        # start.
-        gps_msg.position_covariance = [0.0] * 9
-        gps_msg.position_covariance[0] = 0.1
-        gps_msg.position_covariance[4] = 0.1
-        gps_msg.position_covariance[8] = 0.1
-        gps_msg.position_covariance_type = NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN
-
-        self._gps_pub.publish(gps_msg)
+        try:
+            gps_msg = NavSatFix()
+            gps_msg.header.stamp = timestamp.to_msg()
+            gps_msg.header.frame_id = "gps_link"
+            gps_msg.latitude = response_json["latitude"]
+            gps_msg.longitude = response_json["longitude"]
+            # NOTE: Real covariance values not known, experimenting with this to
+            # start.
+            gps_msg.position_covariance = [0.0] * 9
+            gps_msg.position_covariance[0] = 0.1
+            gps_msg.position_covariance[4] = 0.1
+            gps_msg.position_covariance[8] = 0.1
+            gps_msg.position_covariance_type = NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN
+            self._gps_pub.publish(gps_msg)
+        except Exception as e:
+            self.get_logger().error(f"Failed to parse/publish GPS data: {e}")
         
         # Publish the orientation data.
         # NOTE: If we get robot_localization's ekf to work, it might be able to
