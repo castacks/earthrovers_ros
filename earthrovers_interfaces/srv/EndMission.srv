@@ -1,0 +1,3 @@
+---
+bool mission_ended      # True if mission started successfully
+string message          # Response message from the endpoint

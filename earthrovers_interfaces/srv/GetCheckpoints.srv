@@ -1,0 +1,3 @@
+---
+geographic_msgs/GeoPoint[] checkpoints
+int32 latest_scanned_checkpoint_index
