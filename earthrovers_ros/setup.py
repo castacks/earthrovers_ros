@@ -30,6 +30,7 @@ setup(
             'nav = earthrovers_ros.nav:main',
             'mock_gps = earthrovers_ros.mock_gps:main',
             'mission_control = earthrovers_ros.mission_control:main',
+            'waypoint_receiver = earthrovers_ros.waypoint_receiver:main',
         ],
     },
 )

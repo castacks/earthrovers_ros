@@ -1,5 +1,5 @@
 geographic_msgs/GeoPoint[] gps_points
 ---
 geometry_msgs/Point[] world_frame_points
-std_msgs/bool success
-std_msgs/string message
+std_msgs/Bool success
+std_msgs/String message
