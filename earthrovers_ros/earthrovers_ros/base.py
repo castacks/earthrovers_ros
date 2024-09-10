@@ -157,8 +157,16 @@ class BaseNode(Node):
         # TODO: This functionality should not be present in the future if this
         # node re-implemented as a LifecycleNode. However, having a check like
         # this is still helpful in the name of fault tolerance/identification.
-        if "timestamp" not in response_json:
-            self.get_logger().warn("Timestamp not found in response JSON. Ignoring response. Likely need to start a mission.")
+        try:
+            # Parse the timestamp from the response JSON. This timestamp is
+            # assocaited with the GPS coordinates, orientation.
+            # NOTE: From Santiago: This is the timestamp at which the SDK REQUESTED
+            # THE DATA--not the timestamp at which the data was actually measured.
+            # This is *okay* for now, but could cause some unforseen issues down the
+            # line--keep in mind if we start seeing weird behavior.
+            timestamp = Time(nanoseconds=int(float(response_json["timestamp"]) * 1e9))
+        except Exception as e:
+            self.get_logger().error(f"Failed to parse timestamp from response JSON: {e}")
             return
 
         """Example response:
@@ -179,13 +187,6 @@ class BaseNode(Node):
             "rpm": [0, 0, 0, 0]
         }
         """
-        # Parse the timestamp from the response JSON. This timestamp is
-        # assocaited with the GPS coordinates, orientation.
-        # NOTE: From Santiago: This is the timestamp at which the SDK REQUESTED
-        # THE DATA--not the timestamp at which the data was actually measured.
-        # This is *okay* for now, but could cause some unforseen issues down the
-        # line--keep in mind if we start seeing weird behavior.
-        timestamp = Time(nanoseconds=int(float(response_json["timestamp"]) * 1e9))
 
         # Parse, populate, and publish the IMU data.
         # NOTE: The Earth Rover SDK treats x as up, y as left, and z as
