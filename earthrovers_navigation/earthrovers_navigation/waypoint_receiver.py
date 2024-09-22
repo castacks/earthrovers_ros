@@ -1,8 +1,6 @@
-"""Node for figuring out which waypoint(s) should be tracked by a downstream
-motion planner.
-
-NOTE: This whole node should not be necessary once we have a behavior tree to
-implement this functionality.
+"""Note that gets waypoints from the EarthRovers SDK and publishes them as a
+GeoPath message. It also uses the SDK response to figure out which waypoint
+should be followed next.
 """
 
 import time
@@ -12,9 +10,9 @@ from rclpy.executors import MultiThreadedExecutor
 import requests
 from geographic_msgs.msg import GeoPoseStamped, GeoPath
 
-
 class WaypointReceiverNode(Node):
-    """Node that receives waypoints from the EarthRovers SDK to check for checkpoints and to continuously call checkpoint reached to scan it
+    """Node that receives waypoints from the EarthRovers SDK to check for
+    checkpoints and to continuously call checkpoint reached to scan it.
     """
 
     def __init__(self):

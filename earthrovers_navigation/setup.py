@@ -23,6 +23,7 @@ setup(
             'nav = earthrovers_navigation.nav:main',
             'mission_controller = earthrovers_navigation.mission_controller:main',
             'waypoint_manager = earthrovers_navigation.waypoint_manager:main',
+            'waypoint_receiver = earthrovers_navigation.waypoint_receiver:main',
         ],
     },
 )
