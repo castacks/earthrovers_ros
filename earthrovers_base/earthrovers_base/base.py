@@ -26,7 +26,7 @@ class BaseNode(Node):
     """Node that subscribes to Twist messages on the cmd_vel topic and sends an
     HTTP POST request with the provided angular and linear velocities.
     """
-    
+
     def __init__(self):
         super().__init__("base")
 
@@ -46,12 +46,12 @@ class BaseNode(Node):
                                                      topic="cmd_vel",
                                                      callback=self._cmd_vel_callback,
                                                      qos_profile=10)
-        
+
         # Create a timer for periodically hitting /data endpoint for gps, imu,
         # battery, and other data.
         self._data_timer = self.create_timer(timer_period_sec=1.0 / self.get_parameter("data_publish_rate_hz").get_parameter_value().double_value,
                                              callback=self._get_and_publish_data)
-        
+
         # Create publishers for IMU, Magnetic Field, Odometry, and GPS data.
         self._imu_pub = self.create_publisher(msg_type=Imu, topic="imu", qos_profile=10)
         self._magnetic_field_pub = self.create_publisher(msg_type=MagneticField, topic="magnetic_field", qos_profile=10)
@@ -111,7 +111,7 @@ class BaseNode(Node):
             end = time.perf_counter()
             self.get_logger().debug(f"POST response: {response.text}")
             self.get_logger().debug(f"POST request took {end - start} seconds.")
-    
+
     # TODO: In the future, it may be wise to create a timer callback function
     # that sends the most recently received twist message to the SDK API at a
     # fixed rate, so as to prevent upstream nodes flooding the SDK API with more
@@ -273,7 +273,7 @@ class BaseNode(Node):
             self._gps_pub.publish(gps_msg)
         except Exception as e:
             self.get_logger().error(f"Failed to parse/publish GPS data: {e}")
-        
+
         # Publish the orientation data.
         # NOTE: If we get robot_localization's ekf to work, it might be able to
         # use some kind of sensor model to compute a smoothed orientation from

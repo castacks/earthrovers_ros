@@ -34,7 +34,7 @@ def get_camera_params(filepath: str) -> CameraInfo:
         camera_info.k = camera_params["camera_matrix"]["data"]
         camera_info.r = camera_params["rectification_matrix"]["data"]
         camera_info.p = camera_params["projection_matrix"]["data"]
-        
+
     return camera_info
 
 class CameraNode(Node):
@@ -43,7 +43,7 @@ class CameraNode(Node):
     """
     def __init__(self):
         super().__init__("camera")
-        
+
         # Declare camera node parameters.
         self.declare_parameter("earthrover_sdk_url", "http://localhost:8000")
         self.declare_parameter("front_camera_framerate", 10)
@@ -65,7 +65,7 @@ class CameraNode(Node):
         self._rear_camera_info_pub = self.create_publisher(msg_type=CameraInfo,
                                                            topic="rear_camera/camera_info",
                                                            qos_profile=10)
-        
+
         # Create publisher for map image provided along with the camera images.
         self._map_image_pub = self.create_publisher(msg_type=Image,
                                                     topic="map_image",
@@ -79,15 +79,15 @@ class CameraNode(Node):
                                                     callback=self._get_and_publish_rear_camera_image)
         # self._map_image_timer = self.create_timer(timer_period_sec=1.0 / 10,
         #                                           callback=self._get_and_publish_map_image)
-        
+
         # Try to parse the front camera's calibration parameters.
-        front_camera_params_filepath = f"{get_package_share_directory('earthrovers_ros')}/front_camera.yaml"
+        front_camera_params_filepath = f"{get_package_share_directory('earthrovers_vision')}/front_camera.yaml"
         try:
             self._front_camera_info = get_camera_params(front_camera_params_filepath)
         except Exception as e:
             self.get_logger().error(f"Failed to parse the front camera's calibration parameters from the provided file {front_camera_params_filepath} {e}")
             raise e
-        
+
     def _get_and_publish_front_camera_image(self) -> None:
         """Hits the screenshot endpoint and requests only the front camera
         image.
