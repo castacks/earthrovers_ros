@@ -18,6 +18,13 @@ def generate_launch_description():
         parameters=[{'robot_description': launch_ros.descriptions.ParameterValue(Command(['xacro ',default_model_path]), value_type=str)}]
     )
 
+    joint_state_publisher_node = launch_ros.actions.Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher',
+        parameters=[{'robot_description': launch_ros.descriptions.ParameterValue(Command(['xacro ',default_model_path]), value_type=str)}]
+    )
+
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -63,6 +70,7 @@ def generate_launch_description():
             description='Absolute path to rviz config file'
         ),
         robot_state_publisher,
+        joint_state_publisher_node,
         rviz_node,
         earthrovers_base_node,
         earthrovers_vision_node,
