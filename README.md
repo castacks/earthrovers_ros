@@ -1,6 +1,8 @@
 # earthrovers_ros
 ROS Wrapper for the FrodoBots Earth Rover SDK
 
+![rviz](earthrovers_rviz.png)
+
 # Running in a Docker Container with Rocker
 This repository contains Dockerfiles that should be useful if you're looking to
 work on these ROS packages or deploy them in a container.
