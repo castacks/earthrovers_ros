@@ -256,7 +256,8 @@ class BaseNode(Node):
         # NOTE: Not sure of the consequences of publishing the GPS values
         # multiple times as if they were actually different measurements. This
         # could cause problems for downstream state-estimation systems...look
-        # into this more later!
+        # into this more later! My hunch is that a gps message should not be
+        # published unless the GPS data from the endpoint has actually changed!
         try:
             gps_msg = NavSatFix()
             gps_msg.header.stamp = timestamp.to_msg()

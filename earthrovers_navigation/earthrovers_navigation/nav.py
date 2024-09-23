@@ -1,10 +1,11 @@
 
-from geometry_msgs.msg import PoseArray, Pose
+from geometry_msgs.msg import PoseArray, Pose, TransformStamped
 from sensor_msgs.msg import NavSatFix
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from std_msgs.msg import Float32
 from geographic_msgs.msg import GeoPath
+from tf2_ros import TransformBroadcaster
 import rclpy
 import pyproj
 from scipy.spatial.transform import Rotation as R
@@ -66,6 +67,7 @@ class NavNode(Node):
 
         # TODO: Create a tf broadcaster that broadcasts the transform between
         # the base_link and odom frame.
+        self._tf_broadcaster = TransformBroadcaster(self)
 
     def checkpoint_gps_callback(self, msg: GeoPath):
         """checkpoint_gps_callback
@@ -139,8 +141,9 @@ class NavNode(Node):
             odometry = calculate_odometry(self.__start_gps_coords, current_gps_coords)
 
             # Populate an odometry message with the calculated odometry.
+            timestamp = self.get_clock().now().to_msg()
             odometry_msg = Odometry()
-            odometry_msg.header.stamp = self.get_clock().now().to_msg()
+            odometry_msg.header.stamp = timestamp
             odometry_msg.header.frame_id = "odom"
             odometry_msg.child_frame_id = "base_link"
             self.get_logger().info(f"Calculated odometry: {odometry}")
@@ -172,6 +175,24 @@ class NavNode(Node):
 
             # Publish the odometry message.
             self.__odom_publisher.publish(odometry_msg)
+
+            # Also, publish the base_link to odom transform. The transformation
+            # is essentially the exact same as the post computed for the
+            # odometry message. Eventually, a node from robot_localization
+            # should take this role over or if you have another node fusing
+            # various odometry sources.
+            t = TransformStamped()
+            t.header.stamp = timestamp
+            t.header.frame_id = "odom"
+            t.child_frame_id = "base_link"
+            t.transform.translation.x = odometry[0]
+            t.transform.translation.y = odometry[1]
+            t.transform.translation.z = 0.0
+            t.transform.rotation.x = quaternion[0]
+            t.transform.rotation.y = quaternion[1]
+            t.transform.rotation.z = quaternion[2]
+            t.transform.rotation.w = quaternion[3]
+            self._tf_broadcaster.sendTransform(t)
 
 def main(args=None):
     rclpy.init(args=args)

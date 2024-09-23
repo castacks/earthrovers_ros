@@ -33,15 +33,5 @@ def generate_launch_description():
                 name='rviz2',
                 arguments=['-d', os.path.join(get_package_share_directory('earthrovers_viz'), 'rover_config.rviz')]
             ),
-            # NOTE: This is a temporary static transform publisher to establish
-            # the odom frame. However, this eventually wouldn't be needed if the
-            # node publishing odometry were also to publish a base_link --> odom
-            # transform. Just haven't added that yet.
-            Node(
-                package='tf2_ros',
-                executable='static_transform_publisher',
-                arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-                name='static_transform_publisher'
-            ),
         ]
     )
