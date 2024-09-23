@@ -12,7 +12,7 @@ import numpy as np
 
 def calculate_odometry(initial_gps_coords, current_gps_coords):
     """Calculates the odometry relative to the start GPS coordinates.
-    
+
     Args:
         current_gps_coords (NavSatFix): The current GPS coordinates.
     """
@@ -36,7 +36,7 @@ class NavNode(Node):
     """Node that temporarily creates an odometry message from GPS data. Using in
     place of proper odometry for the time being.
     """
-    
+
     def __init__(self):
         super().__init__("base")
 
@@ -45,7 +45,7 @@ class NavNode(Node):
 
         # Create orientation subscriber.
         self.create_subscription(Float32, "orientation", self.orientation_callback, 10)
-        
+
         # Create checkpoint GPS subscriber, in callback we calculate the relative position to /odm frame and publish as /odom_waypoints
         self.create_subscription(GeoPath, "checkpoints_gps", self.checkpoint_gps_callback, 10)
         # Create odom publisher.
@@ -55,11 +55,9 @@ class NavNode(Node):
         self.orientation_float = None
 
         # Create a ROS service that provides a list of odometry frame waypoints
-        # (converted from the GPS frame) as 
-        # For now, because I don't know how rosbridge handles service
-        # definitions, I'm going to just publish the converted waypoints
-        # continuously and the consumer can grab them as many times as needed.
-        # Not permanent, just for now.
+        # (converted from the GPS frame to UTM coordinates or directly to odom
+        # frame). For now, just going to periodically publish these in place of a
+        # service.
         self.__odom_waypoints_publisher = self.create_publisher(PoseArray, "odom_waypoints", 10)
         self.__next_waypoint_publisher = self.create_publisher(PoseArray, "next_waypoint", 10)
         self.get_logger().info("Created Nav Node.")
@@ -68,7 +66,7 @@ class NavNode(Node):
 
         # TODO: Create a tf broadcaster that broadcasts the transform between
         # the base_link and odom frame.
-    
+
     def checkpoint_gps_callback(self, msg: GeoPath):
         """checkpoint_gps_callback
 
@@ -102,16 +100,16 @@ class NavNode(Node):
 
         # Publish the PoseArray message.
         next_waypoint = PoseArray()
-        next_waypoint.header = odom_waypoints.header 
+        next_waypoint.header = odom_waypoints.header
         next_waypoint.poses = [odom_waypoints.poses[0]]
         self.__next_waypoint_publisher.publish(next_waypoint)
         self.__odom_waypoints_publisher.publish(odom_waypoints)
         self.get_logger().info("Published odometry waypoints.")
-        
+
     def orientation_callback(self, msg: Float32):
         """Callback for the orientation subscriber. Logs the orientation data to
         the console.
-        
+
         Args:
             msg (Float32): The orientation data message.
         """
@@ -120,7 +118,7 @@ class NavNode(Node):
 
     def gps_to_odom_callback(self, msg: NavSatFix):
         """Callback for the GPS subscriber. Logs the GPS data to the console.
-        
+
         Args:
             msg (NavSatFix): The GPS data message.
         """
@@ -133,7 +131,7 @@ class NavNode(Node):
 
         if self.orientation_float is not None:
             # Calculate current odometry relative to start GPS coordinates.
-            
+
 
             # Call the above calculate_odometry function with the current GPS
             # coordinates and use the result to populate an odometry message.
@@ -148,14 +146,14 @@ class NavNode(Node):
             self.get_logger().info(f"Calculated odometry: {odometry}")
             odometry_msg.pose.pose.position.x = odometry[0]
             odometry_msg.pose.pose.position.y = odometry[1]
-            
+
             # TODO: Populate the orientation field of the odometry message with orientation float
             # Float is between 0 and 360, so we can just use this as the yaw.
-            # yaw to quaternion 
-            
+            # yaw to quaternion
+
             # Convert the yaw from degrees to radians
-            yaw_radians = np.deg2rad(-1 * self.orientation_float + 90) 
-            
+            yaw_radians = np.deg2rad(-1 * self.orientation_float + 90)
+
 
             # Create a rotation object for yaw around the Z-axis
             rotation = R.from_euler('z', yaw_radians)
@@ -166,15 +164,15 @@ class NavNode(Node):
             odometry_msg.pose.pose.orientation.y = quaternion[1]
             odometry_msg.pose.pose.orientation.z = quaternion[2]
             odometry_msg.pose.pose.orientation.w = quaternion[3]
-            
+
 
             # TODO: Subscribe to whatever topic the SDK-provided orientation is
             # given published on, as we can use this for the time being until we
             # have the magnometer data integrated.
-            
+
             # Publish the odometry message.
             self.__odom_publisher.publish(odometry_msg)
-            
+
 def main(args=None):
     rclpy.init(args=args)
     nav_node = NavNode()
