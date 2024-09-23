@@ -3,16 +3,19 @@
 
   <!-- Followed the Nav2 URDF guide here: https://docs.nav2.org/setup_guides/urdf/setup_urdf.html -->
 
-  <!-- Define robot constants -->
+  <!-- Define robot constants. NOTE: These may need refined according to the
+        Earth Rover Specification Document found in this package. I tried to
+        make these as "correct" according to the doc as possible, but threw this
+        together one night, so definitely cut some corners. -->
   <xacro:property name="base_width" value="0.273"/>
   <xacro:property name="base_length" value="0.375"/>
   <xacro:property name="base_height" value="0.096"/>
 
   <xacro:property name="wheel_radius" value="0.065"/>
   <xacro:property name="wheel_width" value="0.05"/>
-  <xacro:property name="wheel_ygap" value="0.206"/>
+  <xacro:property name="wheel_ygap" value="0.103"/>
   <xacro:property name="wheel_zoff" value="0.0"/>
-  <xacro:property name="wheel_xoff" value="0.2"/>
+  <xacro:property name="wheel_xoff" value="0.09"/>
 
   <!-- Rover Base -->
   <link name="base_link">
@@ -53,15 +56,86 @@
     <joint name="${prefix}_joint" type="continuous">
       <parent link="base_link"/>
       <child link="${prefix}_link"/>
-      <origin xyz="${x_reflect*wheel_xoff} ${y_reflect*(base_width/2+wheel_ygap)} ${-wheel_zoff}" rpy="0 0 0"/>
+      <origin xyz="${x_reflect*wheel_xoff} ${y_reflect*(wheel_ygap)} ${-wheel_zoff}" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
     </joint>
   </xacro:macro>
 
-  <xacro:wheel prefix="drivewhl_fl" x_reflect="-1" y_reflect="1" />
-  <xacro:wheel prefix="drivewhl_fr" x_reflect="-1" y_reflect="-1" />
+  <xacro:wheel prefix="drivewhl_rl" x_reflect="-1" y_reflect="1" />
+  <xacro:wheel prefix="drivewhl_rr" x_reflect="-1" y_reflect="-1" />
 
-  <xacro:wheel prefix="drivewhl_rl" x_reflect="1" y_reflect="1" />
-  <xacro:wheel prefix="drivewhl_rr" x_reflect="1" y_reflect="-1" />
+  <xacro:wheel prefix="drivewhl_fl" x_reflect="1" y_reflect="1" />
+  <xacro:wheel prefix="drivewhl_fr" x_reflect="1" y_reflect="-1" />
+
+  <!-- Front Camera Link -->
+  <link name="front_camera_link">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+      <material name="Red">
+        <color rgba="1.0 0 0 1.0"/>
+      </material>
+    </visual>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+  </link>
+
+  <!-- Front Camera Joint -->
+  <!-- NOTE: Because the base_link is defined at the center of the robot, I just
+             approximate the camera to be directly in the center. This is not
+             the case in the document; I am just doing this as something quick. -->
+  <joint name="front_camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="front_camera_link"/>
+    <origin xyz="0.013 0.0 0.561" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Rear Camera Link -->
+  <link name="rear_camera_link">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+      <material name="Green">
+        <color rgba="0 1.0 0 1.0"/>
+      </material>
+    </visual>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+  </link>
+
+  <!-- Rear Camera Joint -->
+  <!-- NOTE: Because the base_link is defined at the center of the robot, I just
+             approximate the camera to be directly in the center. This is not
+             the case in the document; I am just doing this as something quick.
+             -->
+  <joint name="rear_camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="rear_camera_link"/>
+    <origin xyz="0.0 0.0 0.561" rpy="0 0 3.14"/>
+  </joint>
+
+  <!-- IMU Link -->
+  <!-- NOTE: This encompasses both the accelerometer+gyro package (mpu6050), as
+             well as the magnetometer chip (qmc5883L). -->
+  <link name="imu_link">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+      <material name="Blue">
+        <color rgba="0 0 1.0 1.0"/>
+      </material>
+    </visual>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+  </link>
+
+  <!-- IMU Joint -->
+  <!-- NOTE: Whether or not this is the correct orientation for the IMU NEEDS TO
+             VALIDATED! I THINK this is right, but haven't time to test it.-->
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0.0 0.0 0.561" rpy="0 0 0"/>
+  </joint>
 
 </robot>
