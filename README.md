@@ -47,11 +47,11 @@ docker build -t earthrovers_development dockerfiles/development
 First, set an environment variable EARTHROVERS_WS to the path to your local
 workspace.
 ```
-export EARTHROVERS_WS=/path/to/your/workspace/folder
+export EARTHROVERS_WS=~/earthrovers_ws/src
 ```
 Next, use rocker to create a new container using the docker image we just built:
 ```
-rocker --x11 --user --ssh --network host --name earthrovers_ros --volume $EARTHROVERS_WS:/earthrovers_ws -- earthrovers_development
+rocker --x11 --user --ssh --privileged --network host --name earthrovers_ros --volume $EARTHROVERS_WS:/earthrovers_ws -- earthrovers_development
 ```
 ### 5. Install Earth Rovers ROS package dependencies in container
 Next, in order that all the Earth Rovers ROS packages have all the libraries and
@@ -86,35 +86,3 @@ instructions](https://code.visualstudio.com/docs/devcontainers/attach-container)
 from the [devcontainers
 documentation](https://code.visualstudio.com/docs/devcontainers/containers) to
 attach your VSCode client to the VSCode server running in your container.
-
-## Deployment Container Setup
-If you only need to run the nodes of these packages without making any changes,
-the deployment container is probably what you're looking for.
-
-### 1. Clone the Earth Rovers ROS repository
-```
-git clone https://github.com/castacks/earthrovers_ros.git
-```
-
-### 3. Build the deployment Docker image
-In the root of the repository you just cloned, run the following command to
-build the deployment Docker image based on the deployment Dockerfile.
-```
-docker build -t earthrovers_deployment dockerfiles/deployment
-```
-### 4. Create deployment container from the image
-Use rocker to create a new container using the docker image we just built:
-```
-rocker --user --network host --name earthrovers_ros -- earthrovers_deployment
-```
-
-## Connecting to an existing container / creating a new terminal session
-If you want to create an additional terminal session *inside* a container that
-you have already spun up, you can create and attach to a new terminal session
-with the following command:
-```
-docker exec -it earthrovers_ros /bin/bash
-```
-See the [documentation for docker
-exec](https://docs.docker.com/reference/cli/docker/container/exec/) for more
-details.
