@@ -121,12 +121,12 @@ class CameraNode(Node):
         # compute its approximate acquisition time.
         timestamp = Time(nanoseconds=response_json["timestamp"] * 1e9)
         front_camera_msg.header.stamp = timestamp.to_msg()
-        front_camera_msg.header.frame_id = "front_camera"
+        front_camera_msg.header.frame_id = "front_camera_link"
         self._front_camera_pub.publish(front_camera_msg)
 
         # Publish the front camera parameters.
         self._front_camera_info.header.stamp = timestamp.to_msg()
-        self._front_camera_info.header.frame_id = "front_camera"
+        self._front_camera_info.header.frame_id = "front_camera_link"
         self._front_camera_info_pub.publish(self._front_camera_info)
 
     def _get_and_publish_rear_camera_image(self) -> None:
@@ -162,12 +162,12 @@ class CameraNode(Node):
         # compute its approximate acquisition time.
         timestamp = Time(nanoseconds=response_json["timestamp"] * 1e9)
         rear_camera_msg.header.stamp = timestamp.to_msg()
-        rear_camera_msg.header.frame_id = "rear_camera"
+        rear_camera_msg.header.frame_id = "rear_camera_link"
         self._rear_camera_pub.publish(rear_camera_msg)
 
         # # Publish the rear camera parameters.
         # self._rear_camera_info.header.stamp = timestamp.to_msg()
-        # self._rear_camera_info.header.frame_id = "rear_camera"
+        # self._rear_camera_info.header.frame_id = "rear_camera_link"
         # self._rear_camera_info_pub.publish(self._rear_camera_info)
 
     def _get_and_publish_map_image(self) -> None:
@@ -202,7 +202,7 @@ class CameraNode(Node):
         # compute its approximate acquisition time.
         timestamp = Time(nanoseconds=response_json["timestamp"] * 1e9)
         map_image_msg.header.stamp = timestamp.to_msg()
-        map_image_msg.header.frame_id = "map"
+        map_image_msg.header.frame_id = "base_link"
         self._map_image_pub.publish(map_image_msg)
 
 def main(args=None):

@@ -138,4 +138,27 @@
     <origin xyz="0.0 0.0 0.561" rpy="0 0 0"/>
   </joint>
 
+  <!-- GPS Link -->
+  <!-- NOTE: The Earth Rover Specification document doesn't mention anything
+             about the GPS receiver being mounted at any meaningful tranform
+             from the base_link, but just including this here so it exists. -->
+  <link name="gps_link">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+      <material name="Yellow">
+        <color rgba="1.0 1.0 0 1.0"/>
+      </material>
+    </visual>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+  </link>
+
+  <!-- GPS Joint -->
+  <joint name="gps_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="gps_link"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+  </joint>
+
 </robot>
