@@ -7,7 +7,7 @@ import rclpy
 from rclpy.time import Time
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
-from sensor_msgs.msg import Imu, MagneticField, NavSatFix
+from sensor_msgs.msg import Imu, MagneticField, NavSatFix, BatteryState
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32
 from transforms3d.euler import euler2quat
@@ -58,6 +58,7 @@ class BaseNode(Node):
         self._odometry_pub = self.create_publisher(msg_type=Odometry, topic="odom", qos_profile=10)
         self._gps_pub = self.create_publisher(msg_type=NavSatFix, topic="gps", qos_profile=10)
         self._ori_pub = self.create_publisher(msg_type=Float32, topic="orientation", qos_profile=10)
+        self._battery_pub = self.create_publisher(msg_type=BatteryState, topic="battery", qos_profile=10)
 
         # Hacky fix: Create variables to store the last latitude and longitude
         # values. We will check against these values each time we get a new
@@ -65,6 +66,12 @@ class BaseNode(Node):
         # publish a new NavSatFix message. Otherwise, ignore it.
         self._last_latitude = None
         self._last_longitude = None
+        # Also, just because our GPS "odometry" depends on getting at least one
+        # additional GPS data point, just have a counter here that allows us to
+        # publish at least one duplicate GPS message before enforcing this. This
+        # is a super hacky fix and can be removed when proper inertial odometry
+        # is added.
+        self._temp_initial_gps_pub_counter = 0
 
     def _cmd_vel_callback(self, twist_msg: Twist) -> None:
         """Callback function for the cmd_vel topic. Receives a Twist message,
@@ -259,8 +266,11 @@ class BaseNode(Node):
             gps_msg.position_covariance[4] = 0.1
             gps_msg.position_covariance[8] = 0.1
             gps_msg.position_covariance_type = NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN
-            # Only publish the GPS message if the GPS data has changed.
-            if gps_msg.latitude != self._last_latitude or gps_msg.longitude != self._last_longitude:
+            # Only publish the GPS message if the GPS data has changed. Again,
+            # this is a super hacky fix that should be removed eventually.
+            if gps_msg.latitude != self._last_latitude or gps_msg.longitude != self._last_longitude or self._temp_initial_gps_pub_counter < 2:
+                if self._temp_initial_gps_pub_counter < 3:
+                    self._temp_initial_gps_pub_counter += 1
                 self._last_latitude = gps_msg.latitude
                 self._last_longitude = gps_msg.longitude
                 self._gps_pub.publish(gps_msg)
@@ -275,6 +285,18 @@ class BaseNode(Node):
         orientation_msg = Float32()
         orientation_msg.data = float(response_json["orientation"])
         self._ori_pub.publish(orientation_msg)
+
+        # Publish the battery state data.
+        try:
+            battery_msg = BatteryState()
+            battery_msg.header.stamp = timestamp.to_msg()
+            battery_msg.header.frame_id = "base_link"
+            battery_msg.percentage = float(int(response_json["battery"])/100.0)
+            self._battery_pub.publish(battery_msg)
+
+        except Exception as e:
+            self.get_logger().error(f"Failed to parse/publish Battery State data: {e}")
+
 
 def main(args=None):
     rclpy.init(args=args)
