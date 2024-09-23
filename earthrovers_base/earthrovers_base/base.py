@@ -59,6 +59,13 @@ class BaseNode(Node):
         self._gps_pub = self.create_publisher(msg_type=NavSatFix, topic="gps", qos_profile=10)
         self._ori_pub = self.create_publisher(msg_type=Float32, topic="orientation", qos_profile=10)
 
+        # Hacky fix: Create variables to store the last latitude and longitude
+        # values. We will check against these values each time we get a new
+        # /data endpoint response to see if the GPS data has changed. If it has,
+        # publish a new NavSatFix message. Otherwise, ignore it.
+        self._last_latitude = None
+        self._last_longitude = None
+
     def _cmd_vel_callback(self, twist_msg: Twist) -> None:
         """Callback function for the cmd_vel topic. Receives a Twist message,
         normalizes the angular and linear velocities, and sends the normalized
@@ -168,25 +175,6 @@ class BaseNode(Node):
             self.get_logger().error(f"Failed to parse timestamp from response JSON: {e}")
             return
 
-        """Example response:
-        {
-            "battery": 100,
-            "signal_level": 5,
-            "orientation": 128,
-            "lamp": 0,
-            "speed": 0,
-            "gps_signal": 31.25,
-            "latitude": 22.753774642944336,
-            "longitude": 114.09095001220703,
-            "vibration": 0.31,
-            "timestamp": 1724189733.208559,
-            "accel": [0.604, -0.853,0.076],
-            "gyro": [3.595, -3.885,-0.557],
-            "mag": [-75, 195,390],
-            "rpm": [0, 0, 0, 0]
-        }
-        """
-
         # Parse, populate, and publish the IMU data.
         # NOTE: The Earth Rover SDK treats x as up, y as left, and z as
         # backward. Convert to ROS coordinate system where x is forward, y is
@@ -271,7 +259,11 @@ class BaseNode(Node):
             gps_msg.position_covariance[4] = 0.1
             gps_msg.position_covariance[8] = 0.1
             gps_msg.position_covariance_type = NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN
-            self._gps_pub.publish(gps_msg)
+            # Only publish the GPS message if the GPS data has changed.
+            if gps_msg.latitude != self._last_latitude or gps_msg.longitude != self._last_longitude:
+                self._last_latitude = gps_msg.latitude
+                self._last_longitude = gps_msg.longitude
+                self._gps_pub.publish(gps_msg)
         except Exception as e:
             self.get_logger().error(f"Failed to parse/publish GPS data: {e}")
 
