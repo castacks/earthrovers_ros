@@ -41,6 +41,24 @@ have them.
 ### [earthrovers_viz](./earthrovers_viz/)
 Houses an RVIZ configuration file for quick and easy visualization.
 
+## Disclaimer
+While these packages cover the basics and have pretty documentation, it is VERY
+IMPORTANT to note that there are key missing capabilities and broken features.
+For example:
+- The "odometry" that is published by the `nav` node is derived from change in
+  GPS positions, rather than from an inertial sensor or the wheel encoders. This
+  results in very "choppy," noisy odometry.
+- The camera node sometimes publishes screenshots of the map instead of actual
+  camera frames.
+- The dimensions specified in the URDF are not *exactly* correct--there are
+  slight differences from the hardware spec that need fine-tuned.
+
+Every node in this repo is provided as "best-effort" given how much time we had.
+If you have time to add a feature or help resolve some of the issues, we will do
+our best to monitor issues and pull requests, but cannot gaurantee a timely
+resolution. Please, however, do still open issues for problems that you
+encounter that are not yet documented!
+
 <!-- # General Usage Instructions
 This section assumes you have basic experience with ROS 2 and are familiar with
 creating workspaces, building packages, running nodes, etc. If you are just
