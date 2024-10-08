@@ -8,9 +8,7 @@ from rclpy.time import Time
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu, MagneticField, NavSatFix, BatteryState
-from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32
-from transforms3d.euler import euler2quat
 # from conversions import degs_to_rads, gs_to_ms2, lsb_to_tesla
 from .conversions import degs_to_rads, gs_to_ms2, lsb_to_tesla
 
@@ -55,7 +53,6 @@ class BaseNode(Node):
         # Create publishers for IMU, Magnetic Field, Odometry, and GPS data.
         self._imu_pub = self.create_publisher(msg_type=Imu, topic="imu", qos_profile=10)
         self._magnetic_field_pub = self.create_publisher(msg_type=MagneticField, topic="magnetic_field", qos_profile=10)
-        self._odometry_pub = self.create_publisher(msg_type=Odometry, topic="odom", qos_profile=10)
         self._gps_pub = self.create_publisher(msg_type=NavSatFix, topic="gps", qos_profile=10)
         self._ori_pub = self.create_publisher(msg_type=Float32, topic="orientation", qos_profile=10)
         self._battery_pub = self.create_publisher(msg_type=BatteryState, topic="battery", qos_profile=10)

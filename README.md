@@ -1,7 +1,52 @@
 # earthrovers_ros
-ROS Wrapper for the FrodoBots Earth Rover SDK
+ROS 2 Wrapper for the FrodoBots Earth Rover SDK
 
 ![rviz](earthrovers_rviz.png)
+
+## ROS Packages
+This repository is home to a handful of ROS packages, each housing nodes that
+allow you to interact with the Earth Rover SDK.
+
+See each package's README for more details on its nodes and the interfaces for
+each.
+### earthrovers_base
+Contains `base` node that publishes imu, gps, and other data from the Earth
+Rover SDK's `/data` endpoint.
+### earthrovers_bringup
+Package to house launch files for bringing up the Earth Rovers ROS stack.
+### earthrovers_description
+Contains URDF description of the FrodoBot. Used to establish all the static
+transforms between the rover's different links/frames.
+### earthrovers_interfaces
+Contains custom service definitions (that you probably won't ever use).
+### earthrovers_navigation
+Mainly contains a node (`nav`) for producing "fake" odometry odometry messages derived
+from the change in GPS positions. Also contains a node to publish consecutive
+mission checkpoints as they are reached (`waypoint_receiver`). Note that any
+other node in this package was experimental/not finished.
+### earthrovers_vision
+Contains a node for grabbing front and rear camera frames from the SDK. Also
+provides a basic framework for how you might publish camera parameters if you
+have them.
+### earthrovers_viz
+Houses an RVIZ configuration file for quick and easy visualization.
+<!-- 
+## Basic Usage
+### 1. Clone this repo into a ROS 2 workspace
+
+### 2. Install dependencies with rosdep
+
+### 3. Build the workspace
+```
+colcon build
+```
+
+### 4. Launch the earth rovers stack with launch file
+```
+ros2 launch earthrovers_bringup rover_bringup_launch.py
+```
+
+NOTE: Be sure to start up the Earth Rovers SDK if you have not already. -->
 
 # Running in a Docker Container with Rocker
 This repository contains Dockerfiles that should be useful if you're looking to
