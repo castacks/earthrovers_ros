@@ -61,5 +61,15 @@ package.
   odometry sources that you want to reconcile/combine to create an overall
   better odometry estimate.
 
+## `waypoint_receiver` node
+This node is responsible for periodically getting a list of the GPS (WGS 84)
+checkpoints from the Earth Rovers SDK
+[`/checkpoints-list`](https://github.com/frodobots-org/earth-rovers-sdk?tab=readme-ov-file#post-checkpoints-list)
+endpoint.
 
+It keeps track of which checkpoints have been reached already according to the `/checkpoints-list` response and publishes only the GPS waypoints that have not yet been reached.
 
+### ROS Topics Published
+| ROS Topic | Interface | Description |
+| --- | --- | --- |
+| `odom` | [geographic_msgs/GeoPath](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/GeoPath.html) | List of GPS mission checkpoints that have not yet been reached. |
