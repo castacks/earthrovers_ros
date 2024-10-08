@@ -120,7 +120,24 @@ rosdep update --rosdistro $ROS_DISTRO && \
 rosdep install --from-paths src -y -r --ignore-src
 ```
 
-### 6. Connect VSCode to your development container
+### 6. Build the workspace
+Once your workspace is set up with all the Earth Rovers ROS packages, run the
+following to build the workspace.
+```
+colcon build
+```
+
+### 7. Launch nodes with tmuxp
+When developing a handful of connected ROS nodes, it can often be helpful to run
+each one of them in a separate terminal window for easier debugging. If you
+optionall installed tmuxp from the above prerequisites list, you can run all the
+nodes with the following:
+
+```
+tmuxp load /earthrovers_ws/src/earthrovers_ros/tmuxp_configs/dev.yaml
+```
+
+### 8. Connect VSCode to your development container
 While you can edit the source files with your editor of choice on your host-OS,
 your editor likely won't have a way to know how to resolve packages or header
 files that your modules / source files are importing that are installed within
@@ -136,13 +153,3 @@ instructions](https://code.visualstudio.com/docs/devcontainers/attach-container)
 from the [devcontainers
 documentation](https://code.visualstudio.com/docs/devcontainers/containers) to
 attach your VSCode client to the VSCode server running in your container.
-
-### 7. Launch nodes with tmuxp
-When developing a handful of connected ROS nodes, it can often be helpful to run
-each one of them in a separate terminal window for easier debugging. If you
-optionall installed tmuxp from the above prerequisites list, you can run all the
-nodes with the following:
-
-```
-tmuxp load /earthrovers_ws/src/earthrovers_ros/tmuxp_configs/dev.yaml
-```
