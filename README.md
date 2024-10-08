@@ -128,8 +128,6 @@ work on these ROS packages or deploy them in a container.
   and [post-install instructions](https://docs.docker.com/engine/install/linux-postinstall/))
 - OSRF's rocker ([installation
   instructions](https://github.com/osrf/rocker?tab=readme-ov-file#debians-recommended))
-- tmuxp (optional) ([installation
-  instructions](https://github.com/tmux-python/tmuxp?tab=readme-ov-file#installation))
 
 Note: rocker is not *absolutely* necessary--but **greatly** simplifies the
 process of running a container with all the options you usually want.
@@ -154,7 +152,8 @@ cd ~/earthrovers_ws/src
 
 ### 2. Clone the Earth Rovers ROS repository into your workspace's src folder
 ```
-git clone https://github.com/castacks/earthrovers_ros.git
+git clone https://github.com/castacks/earthrovers_ros.git &&\
+cd earthrovers_ros
 ```
 
 ### 3. Build the development Docker image
@@ -167,7 +166,7 @@ docker build -t earthrovers_development dockerfiles/development
 First, set an environment variable EARTHROVERS_WS to the path to your local
 workspace.
 ```
-export EARTHROVERS_WS=~/earthrovers_ws/src
+export EARTHROVERS_WS=~/earthrovers_ws
 ```
 Next, use rocker to create a new container using the docker image we just built:
 ```
@@ -221,9 +220,9 @@ colcon build
 
 ### 2. Launch nodes with tmuxp
 When developing a handful of connected ROS nodes, it can often be helpful to run
-each one of them in a separate terminal window for easier debugging. If you
-optionally installed tmuxp from the above prerequisites list, you can run all the
-nodes with the command below.
+each one of them in a separate terminal window for easier debugging. You can run
+all of the nodes of the stack in separate tmux windows using the provided tmuxp
+script using the following command:
 
 ```
 tmuxp load /earthrovers_ws/src/earthrovers_ros/tmuxp_configs/dev.yaml
