@@ -9,11 +9,15 @@ windows:
       - source install/local_setup.bash
     panes:
     - shell_command:
+      - ros2 launch earthrovers_bringup rover_tf_launch.py
+    - shell_command:
       - ros2 run earthrovers_base base --ros-args --log-level debug
     - shell_command:
       - ros2 run earthrovers_navigation nav
     - shell_command:
       - ros2 run earthrovers_vision cameras
+    - shell_command:
+      - ros2 run earthrovers_navigation waypoint_receiver
     - shell_command:
       - ros2 run teleop_twist_keyboard teleop_twist_keyboard
     - shell_command:
