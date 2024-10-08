@@ -49,6 +49,7 @@ class CameraNode(Node):
         self.declare_parameter("front_camera_framerate", 10)
         self.declare_parameter("rear_camera_framerate", 10)
         self.declare_parameter("front_camera_params_filepath", "/earthrovers_ws/src/earthrovers_ros/config/camera_calibration/front_camera.yaml")
+        self.declare_parameter("rear_camera_params_filepath", "/earthrovers_ws/src/earthrovers_ros/config/camera_calibration/rear_camera.yaml")
 
         # Create publishers for front camera messages.
         self._front_camera_pub = self.create_publisher(msg_type=Image,
@@ -82,10 +83,20 @@ class CameraNode(Node):
 
         # Try to parse the front camera's calibration parameters.
         front_camera_params_filepath = f"{get_package_share_directory('earthrovers_vision')}/front_camera.yaml"
+        self._front_camera_info = None
         try:
             self._front_camera_info = get_camera_params(front_camera_params_filepath)
         except Exception as e:
             self.get_logger().error(f"Failed to parse the front camera's calibration parameters from the provided file {front_camera_params_filepath} {e}")
+            raise e
+
+        # Try to parse the front camera's calibration parameters.
+        rear_camera_params_filepath = f"{get_package_share_directory('earthrovers_vision')}/rear_camera.yaml"
+        self._rear_camera_info = None
+        try:
+            self._rear_camera_info = get_camera_params(rear_camera_params_filepath)
+        except Exception as e:
+            self.get_logger().error(f"Failed to parse the rear camera's calibration parameters from the provided file {rear_camera_params_filepath} {e}")
             raise e
 
     def _get_and_publish_front_camera_image(self) -> None:
@@ -125,9 +136,10 @@ class CameraNode(Node):
         self._front_camera_pub.publish(front_camera_msg)
 
         # Publish the front camera parameters.
-        self._front_camera_info.header.stamp = timestamp.to_msg()
-        self._front_camera_info.header.frame_id = "front_camera_link"
-        self._front_camera_info_pub.publish(self._front_camera_info)
+        if self._front_camera_info != None:
+            self._front_camera_info.header.stamp = timestamp.to_msg()
+            self._front_camera_info.header.frame_id = "front_camera_link"
+            self._front_camera_info_pub.publish(self._front_camera_info)
 
     def _get_and_publish_rear_camera_image(self) -> None:
         """Hits the screenshot endpoint and requests only the rear camera
@@ -165,10 +177,11 @@ class CameraNode(Node):
         rear_camera_msg.header.frame_id = "rear_camera_link"
         self._rear_camera_pub.publish(rear_camera_msg)
 
-        # # Publish the rear camera parameters.
-        # self._rear_camera_info.header.stamp = timestamp.to_msg()
-        # self._rear_camera_info.header.frame_id = "rear_camera_link"
-        # self._rear_camera_info_pub.publish(self._rear_camera_info)
+        # Publish the rear camera parameters.
+        if self._rear_camera_info != None:
+            self._rear_camera_info.header.stamp = timestamp.to_msg()
+            self._rear_camera_info.header.frame_id = "rear_camera_link"
+            self._rear_camera_info_pub.publish(self._rear_camera_info)
 
     def _get_and_publish_map_image(self) -> None:
         """Hits the screenshot endpoint and requests only the map image.
