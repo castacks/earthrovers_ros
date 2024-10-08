@@ -28,7 +28,7 @@ Package to house launch files for bringing up the Earth Rovers ROS stack.
 Contains URDF description of the FrodoBot. Used to establish all the static
 transforms between the rover's different links/frames.
 ### [earthrovers_interfaces](./earthrovers_interfaces/)
-Contains custom service definitions (that you probably won't ever use).
+Contains custom service and message definitions.
 ### [earthrovers_navigation](./earthrovers_navigation/)
 Mainly contains a node (`nav`) for producing "fake" odometry odometry messages derived
 from the change in GPS positions. Also contains a node to publish consecutive
@@ -40,6 +40,65 @@ provides a basic framework for how you might publish camera parameters if you
 have them.
 ### [earthrovers_viz](./earthrovers_viz/)
 Houses an RVIZ configuration file for quick and easy visualization.
+
+<!-- # General Usage Instructions
+This section assumes you have basic experience with ROS 2 and are familiar with
+creating workspaces, building packages, running nodes, etc. If you are just
+getting started with ROS 2, please spend some time with the [tutorials from the
+ROS 2 docs](https://docs.ros.org/en/humble/Tutorials.html). If you are mainly
+interested in using the packages in this repo, the [client libraries
+section](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)
+may be the most immediately helpful.
+
+If you *are* already familiar with ROS, using these packages is simply a matter
+of cloning these into your workspace's `src` folder, installing dependencies,
+building with `colcon`, and then running the nodes. For completeness, these
+steps will begin with creating a fresh workspace, with the steps largely taking
+after those outlined in [this
+tutorial](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.html#creating-a-workspace).
+
+## Prerequisites
+- You already have ROS 2 Humble **Desktop** installed on a [ROS 2 Humble capable
+system](https://www.ros.org/reps/rep-2000.html#humble-hawksbill-may-2022-may-2027)
+
+## 1. Create a new workspace
+Cd to wherever you want to place your 
+
+## 2. Clone the repository
+First, clone this repository containing all the packages into an existing
+ROS 2 workspace's `src` folder.
+
+```
+cd path/to/your/workspaces/src/folder
+git clone https://github.com/castacks/earthrovers_ros.git
+```
+## 2. Install package dependencies
+Use [rosdep](https://docs.ros.org/en/humble/Tutorials/Intermediate/Rosdep.html#rosdep-operation) to install Python and system dependencies.
+```
+sudo apt-get update && \
+rosdep update --rosdistro $ROS_DISTRO && \
+rosdep install --from-paths src -y -r --ignore-src
+```
+
+## 3. Build with colcon
+
+## 4. Launch the nodes
+
+These packages can be used like any other "source packages" that you clone into
+your workspace's `src`.
+
+If you are new to ROS and unfamiliar with this pattern or are confused with how
+this works, follow the 
+
+If you are new to ROS but still want to use these nodes, all you need to know
+is that these packages must be placed in the `src` folder of your workspace. In
+this case, you can simply clone this entire repository into your workspace's
+`src` folder. Then, use rosdep to install all the system dependencies required
+by these packages. Finally, use colcon to build the workspace.
+
+The above describes a general pattern of working with other ROS packages in your
+ROS workspace. For context, the most simple example of this pattern is first
+shown in the [Creating a workspace page](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.html#clone-a-sample-repo) of the ROS2 docs. -->
 
 # Running in a Docker Container with Rocker
 This repository contains Dockerfiles that should be useful if you're looking to
