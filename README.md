@@ -5,10 +5,10 @@ ROS 2 packages for interacting with the [FrodoBots](https://www.frodobots.ai/)
 ![rviz](earthrovers_rviz.png)
 
 ## Features
-- Control Earth Rover Challenge FrodoBots with ROS `Twist` messages
-- Front and rear camera frames published as standard `Image` messages
-- GPS fixes published as `NavSatFix` messages, IMU readings published as `Imu`
-  and `MagneticField` messages
+- Control Earth Rover Challenge FrodoBots with ROS [`Twist`](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html) messages
+- Front and rear camera frames published as standard [`Image`](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/Image.html) messages
+- GPS fixes published as [`NavSatFix`](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/NavSatFix.html) messages, IMU readings published as [`Imu`](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/Imu.html)
+  and [`MagneticField`](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/MagneticField.html) messages
 - Basic
   [URDF](https://industrial-training-master.readthedocs.io/en/melodic/_source/session3/Intro-to-URDF.html)
   description of the FrodoBots
