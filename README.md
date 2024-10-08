@@ -214,6 +214,7 @@ you can build the packages in the workspace and then run the nodes.
 Once your workspace is set up with all the Earth Rovers ROS packages, run the
 following to build the workspace.
 ```
+source /opt/ros/humble/setup.bash && \
 cd /earthrovers_ws && \
 colcon build
 ```
