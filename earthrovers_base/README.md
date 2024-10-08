@@ -1,5 +1,5 @@
 # earthrovers_base
-This package primarily contains the `base` node, which is one of the core nodes
+This package mainly houses the `base` node, which is one of the core nodes
 used to interface with the Earth Rovers SDK.
 
 ## `base` node
