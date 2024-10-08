@@ -56,7 +56,10 @@ work on these ROS packages or deploy them in a container.
 - Docker engine ([installation
   instructions](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
   and [post-install instructions](https://docs.docker.com/engine/install/linux-postinstall/))
-- OSRF's rocker ([installation instructions](https://github.com/osrf/rocker?tab=readme-ov-file#debians-recommended))
+- OSRF's rocker ([installation
+  instructions](https://github.com/osrf/rocker?tab=readme-ov-file#debians-recommended))
+- tmuxp (optional) ([installation
+  instructions](https://github.com/tmux-python/tmuxp?tab=readme-ov-file#installation))
 
 Note: rocker is not *absolutely* necessary--but **greatly** simplifies the
 process of running a container with all the options you usually want.
@@ -133,3 +136,13 @@ instructions](https://code.visualstudio.com/docs/devcontainers/attach-container)
 from the [devcontainers
 documentation](https://code.visualstudio.com/docs/devcontainers/containers) to
 attach your VSCode client to the VSCode server running in your container.
+
+### 7. Launch nodes with tmuxp
+When developing a handful of connected ROS nodes, it can often be helpful to run
+each one of them in a separate terminal window for easier debugging. If you
+optionall installed tmuxp from the above prerequisites list, you can run all the
+nodes with the following:
+
+```
+tmuxp load /earthrovers_ws/src/earthrovers_ros/tmuxp_configs/dev.yaml
+```
