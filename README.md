@@ -177,13 +177,10 @@ Next, in order that all the Earth Rovers ROS packages have all the libraries and
 packages they need to work properly, we need to install those inside the
 container.
 
-To this, first navigate to `earthrovers_ws` directory:
+To this, first navigate to `earthrovers_ws` directory, and then run the
+following commands **in the container**:
 ```
-cd /earthrovers_ws
-```
-
-To do this, run the following commands **in the container**:
-```
+cd /earthrovers_ws && \
 sudo apt-get update && \
 rosdep update --rosdistro $ROS_DISTRO && \
 rosdep install --from-paths src -y -r --ignore-src
