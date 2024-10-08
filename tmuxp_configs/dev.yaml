@@ -15,9 +15,9 @@ windows:
     - shell_command:
       - ros2 run earthrovers_navigation nav
     - shell_command:
-      - ros2 run earthrovers_vision cameras
-    - shell_command:
       - ros2 run earthrovers_navigation waypoint_receiver
+    - shell_command:
+      - ros2 run earthrovers_vision cameras
     - shell_command:
       - ros2 run teleop_twist_keyboard teleop_twist_keyboard
     - shell_command:
