@@ -222,6 +222,10 @@ each one of them in a separate terminal window for easier debugging. You can run
 all of the nodes of the stack in separate tmux windows using the provided tmuxp
 script using the following command:
 
+**NOTE: The earth rovers SDK needs to be running and mission must be started in
+order for these ROS nodes to work as expected!** Follow [these instructions](https://github.com/frodobots-org/earth-rovers-sdk?tab=readme-ov-file#getting-started) here
+to get your access token, bot slugs, and start the local SDK server.
+
 ```
 tmuxp load /earthrovers_ws/src/earthrovers_ros/tmuxp_configs/dev.yaml
 ```
