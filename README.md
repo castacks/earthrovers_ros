@@ -229,6 +229,8 @@ to get your access token, bot slugs, and start the local SDK server.
 ```
 tmuxp load /earthrovers_ws/src/earthrovers_ros/tmuxp_configs/dev.yaml
 ```
+*Hint: To exit out of the whole tmux session, press ctrl+b, type
+":kill-session, and then press enter.*
 
 OR, if you prefer to launch the nodes all together, you can use the bringup
 launch file.
