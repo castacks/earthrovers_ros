@@ -21,6 +21,6 @@ windows:
     - shell_command:
       - ros2 run teleop_twist_keyboard teleop_twist_keyboard
     - shell_command:
-      - ros2 run rviz2 rviz2 -d src/earthrovers_viz/rviz/rover_config.rviz
+      - ros2 run rviz2 rviz2 -d src/earthrovers_ros/earthrovers_viz/rviz/rover_config.rviz
 options:
   mouse: on  # Enable mouse mode
