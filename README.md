@@ -129,9 +129,6 @@ work on these ROS packages or deploy them in a container.
 - OSRF's rocker ([installation
   instructions](https://github.com/osrf/rocker?tab=readme-ov-file#debians-recommended))
 
-Note: rocker is not *absolutely* necessary--but **greatly** simplifies the
-process of running a container with all the options you usually want.
-
 ## Development Container Setup
 If you are looking to make changes / contribute to this package, you can save
 yourself a ton of headache by working in a development container.
