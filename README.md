@@ -2,7 +2,7 @@
 ROS 2 packages for interacting with the [FrodoBots](https://www.frodobots.ai/)
 [Earth Rovers SDK](https://github.com/frodobots-org/earth-rovers-sdk).
 
-![rviz](earthrovers_rviz.png)
+![rviz](./images/earthrovers_rviz.png)
 
 ## Features
 - Control Earth Rover Challenge FrodoBots with ROS [`Twist`](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html) messages
@@ -122,12 +122,17 @@ shown in the [Creating a workspace page](https://docs.ros.org/en/humble/Tutorial
 This repository contains Dockerfiles that should be useful if you're looking to
 work on these ROS packages or deploy them in a container.
 
-## Prerequisites
+## Prerequisites and Assumptions
+- Host machine with Ubuntu 20.04 or above (x86 or ARM)
 - Docker engine ([installation
   instructions](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
   and [post-install instructions](https://docs.docker.com/engine/install/linux-postinstall/))
 - OSRF's rocker ([installation
   instructions](https://github.com/osrf/rocker?tab=readme-ov-file#debians-recommended))
+
+*NOTE: If you are familiar with ROS, note that none of those prerequisistes are
+strictly necessary. We just highly recommended them for the easiest
+getting-started experience.*
 
 ## Development Container Setup
 If you are looking to make changes / contribute to this package, you can save
@@ -229,8 +234,24 @@ tmuxp load /earthrovers_ws/src/earthrovers_ros/tmuxp_configs/dev.yaml
 *Hint: To exit out of the whole tmux session, press ctrl+b, type
 ":kill-session, and then press enter.*
 
-OR, if you prefer to launch the nodes all together, you can use the bringup
-launch file.
+If you're not looking to debug the individual nodes of the stack, there is also
+a provided launch file here (which you'll probably want to use + extend if
+you're just using the stack for another application).
 ```
 ros2 launch earthrovers_bringup rover_bringup_launch.py
 ```
+
+## Teleoperating a Rover
+Once you have the stack running in the development container using the steps
+described above, you should have everything you need to remotely control the
+FrodoBot via the ROS control interface.
+
+If you successfully launched all the nodes using the `tmuxp` command, one of the
+window panes opened should look something like this:
+
+![teleop_keyboard](./images/teleop_keyboard.png)
+
+Click on this pane to bring it into focus. Then, you can use the `i`, `j`, `k`,
+and `l` keys to move around the earth rover. An `rviz` window should have
+appeared--check out the front and camera image previews to see if its moving.
+Rviz will also show the rover's position in 3D space as it gets GPS updates.
