@@ -73,3 +73,22 @@ It keeps track of which checkpoints have been reached already according to the `
 | ROS Topic | Interface | Description |
 | --- | --- | --- |
 | `odom` | [geographic_msgs/GeoPath](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/GeoPath.html) | List of GPS mission checkpoints that have not yet been reached. |
+
+
+## `mission_controller` node
+This node defines a set of services for interacting with the [Earth Rovers SDK
+mission
+endpoints](https://github.com/frodobots-org/earth-rovers-sdk?tab=readme-ov-file#missions-api)
+via ROS. Note that none of these services are integrated with / called by any
+other nodes, but could be invoked via the
+[rqt_service_caller](https://wiki.ros.org/rqt_service_caller), a [behavior
+tree](https://www.behaviortree.dev/docs/ros2_integration/), or your own custom
+node.
+
+### ROS Services Advertised
+| ROS Topic | Interface | Description |
+| --- | --- | --- |
+| `start_mission` | [earthrovers_interfaces/StartMission](../earthrovers_interfaces/srv/StartMission.srv) | Service for starting the mission specified in the SDK's `.env` file. |
+| `end_mission` | [earthrovers_interfaces/EndMission](../earthrovers_interfaces/srv/EndMission.srv) | Service for ending the current mission. Note that you must be connected to the robot that you started the mission on in order for it to successfully be ended. |
+| `checkpoint_reached` | [earthrovers_interfaces/CheckpointReached](../earthrovers_interfaces/srv/CheckpointReached.srv) | Service to check whether the current checkpoint has been reached. |
+| `get_checkpoints` | [earthrovers_interfaces/GetCheckpoints](../earthrovers_interfaces/srv/GetCheckpoints.srv) | Service for getting a list of the mission's WGS 84 (GPS) waypoints. |
