@@ -118,6 +118,35 @@ The above describes a general pattern of working with other ROS packages in your
 ROS workspace. For context, the most simple example of this pattern is first
 shown in the [Creating a workspace page](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.html#clone-a-sample-repo) of the ROS2 docs. -->
 
+## Getting Started
+### Set up the SDK
+Before you can use any of these ROS packages to interface with the Earth Rovers
+SDK, you need to make sure you have the Earth Rovers SDk set up! Follow
+Santiag's great instructions
+[here](https://github.com/frodobots-org/earth-rovers-sdk?tab=readme-ov-file#getting-started)
+for getting started with that first. Basically, before you run any of these ROS
+nodes, you'll want to make sure you already have the SDK connected to a robot
+and have [**started the mission.**](https://github.com/frodobots-org/earth-rovers-sdk?tab=readme-ov-file#post-start-mission)
+
+### Recommended Setup
+If you are just getting started with ROS and are new to all this (**or** are a
+pro and want the least-resistance path to getting the stack up and running), we
+**highly recommend** you follow the [step-by-step instructions we provide for
+running the Earth Rovers ROS stack in a Docker container outlined
+below.](#running-in-a-docker-container-with-rocker). These steps include setting
+up the Earth Rovers ROS packages in a Docker container with ROS 2 Humble Desktop
+already installed.
+
+### If You Are Already a ROS Pro
+If you generally know your way around ROS / ROS packages, this should be pretty
+familiar. Just clone this repository into your workspace's `src` folder, run
+`colcon build`, and launch the nodes using the
+[`rover_bringup_launch.py`](earthrovers_ros/earthrovers_bringup/launch/rover_bringup_launch.py)
+launch file. Each package has pretty decent documentation with all of the topics
+its nodes publish and subscribe to, and you will probably be able to piece
+things together fairly quickly.
+
+
 # Running in a Docker Container with Rocker
 This repository contains Dockerfiles that should be useful if you're looking to
 work on these ROS packages or deploy them in a container.
